@@ -147,7 +147,7 @@ export function CircuitCanvas() {
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      if (e.button === 1 || (e.button === 0 && e.spaceKey) || (e.target === svgRef.current)) {
+      if (e.button === 1 || e.button === 2 || e.target === svgRef.current) {
         if (e.button === 1 || e.button === 2) {
           e.preventDefault();
           setPanning(true);

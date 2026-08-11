@@ -282,7 +282,7 @@ function TemplatesTab() {
               key={t.id}
               onClick={async () => {
                 try {
-                  const p = await createProject(t.name, t.description, t.data);
+                  const p = await createProject(t.name, t.description || '', t.data);
                   loadProject(p);
                   setView('editor');
                   addToast(`Created "${p.name}" from template`, 'success');
