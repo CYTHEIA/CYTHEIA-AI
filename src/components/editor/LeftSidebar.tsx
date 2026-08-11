@@ -21,6 +21,7 @@ const TABS = [
 export function LeftSidebar() {
   const tab = useUIStore((s) => s.leftSidebarTab);
   const setTab = useUIStore((s) => s.setLeftSidebarTab);
+  const setView = useUIStore((s) => s.setView);
   const open = useUIStore((s) => s.leftSidebarOpen);
 
   if (!open) return null;
@@ -35,7 +36,13 @@ export function LeftSidebar() {
           return (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => {
+                if (t.id === 'plans') {
+                  setView('plans');
+                  return;
+                }
+                setTab(t.id);
+              }}
               className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${
                 active ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
@@ -55,7 +62,6 @@ export function LeftSidebar() {
         {tab === 'templates' && <TemplatesTab />}
         {tab === 'favorites' && <FavoritesTab />}
         {tab === 'history' && <HistoryTab />}
-        {tab === 'plans' && <PlansTab />}
       </div>
     </div>
   );

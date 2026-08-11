@@ -5,6 +5,7 @@ import {
 import { useUIStore } from '@/store/uiStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSimulationStore } from '@/store/simulationStore';
+import { useSubscriptionStore, PLANS, PLAN_LIMITS } from '@/store/subscriptionStore';
 import { updateProject, createProject } from '@/services/persistence';
 import { useEffect, useRef, useState } from 'react';
 import { NextelLogo } from '@/pages/LandingPage';
@@ -16,6 +17,8 @@ export function TopBar() {
   const toggleBottom = useUIStore((s) => s.toggleBottomPanel);
   const toggleCommandPalette = useUIStore((s) => s.toggleCommandPalette);
   const addToast = useUIStore((s) => s.addToast);
+  const currentPlan = useSubscriptionStore((s) => s.currentPlan);
+  const usage = useSubscriptionStore((s) => s.usage);
 
   const projectName = useProjectStore((s) => s.projectName);
   const setProjectName = useProjectStore((s) => s.setProjectName);
@@ -40,6 +43,8 @@ export function TopBar() {
   const [nameInput, setNameInput] = useState(projectName);
   const [showSettings, setShowSettings] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const plan = PLANS.find((item) => item.id === currentPlan) ?? PLANS[0];
+  const limits = PLAN_LIMITS[currentPlan];
 
   useEffect(() => {
     initEngine();
@@ -269,7 +274,7 @@ export function TopBar() {
       </div>
 
       {showSettings && (
-        <div className="absolute top-12 right-3 w-64 bg-[#2a2a2e] border border-white/10 rounded-xl shadow-2xl p-3 z-50">
+        <div className="absolute top-12 right-3 w-72 max-h-[calc(100vh-4rem)] overflow-y-auto bg-[#2a2a2e] border border-white/10 rounded-xl shadow-2xl p-3 z-50">
           <div className="text-sm font-medium text-white mb-3">Settings</div>
           <div className="flex flex-col gap-2">
             <SettingToggle label="Show grid" store="showGrid" />
@@ -287,6 +292,44 @@ export function TopBar() {
               />
               <span className="text-xs text-gray-400">{useSimulationStore.getState().speed}x</span>
             </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-white/5">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Current plan</div>
+                <div className="text-sm font-semibold text-white mt-1">{plan.name}</div>
+                <div className="text-xs text-gray-400 mt-1">{plan.description}</div>
+              </div>
+              <button
+                onClick={() => setView('plans')}
+                className="flex-shrink-0 px-2.5 py-1.5 bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 rounded-lg text-xs transition-colors"
+              >
+                View plans
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="bg-white/5 rounded-lg p-2">
+                <div className="text-gray-500">AI usage</div>
+                <div className="text-gray-200 mt-1">{usage.aiQueriesUsed} / {usage.aiQueriesLimit ?? 'Unlimited'}</div>
+              </div>
+              <div className="bg-white/5 rounded-lg p-2">
+                <div className="text-gray-500">Projects</div>
+                <div className="text-gray-200 mt-1">{usage.projectsUsed} / {usage.projectsLimit ?? 'Unlimited'}</div>
+              </div>
+              <div className="bg-white/5 rounded-lg p-2">
+                <div className="text-gray-500">Storage</div>
+                <div className="text-gray-200 mt-1">{usage.storageUsedMB} / {usage.storageLimitMB ?? 'Unlimited'} MB</div>
+              </div>
+              <div className="bg-white/5 rounded-lg p-2">
+                <div className="text-gray-500">Features</div>
+                <div className="text-gray-200 mt-1">{limits.aiDebugging} debugging</div>
+              </div>
+              <div className="col-span-2 bg-white/5 rounded-lg p-2">
+                <div className="text-gray-500">Available features</div>
+                <div className="text-gray-300 mt-1 leading-relaxed">{plan.features.slice(0, 3).join(' · ')}</div>
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-500 mt-3">Usage shown is local demo data. Billing is not connected.</p>
           </div>
         </div>
       )}

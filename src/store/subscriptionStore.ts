@@ -23,7 +23,7 @@ export const PLANS: PlanInfo[] = [
     id: 'premium',
     name: 'Premium',
     tagline: 'Recommended',
-    price: '$12',
+    price: 'TBD',
     period: '/month',
     recommended: true,
     description: 'Everything in Basic, plus AI guidance, wiring suggestions, and code generation.',
