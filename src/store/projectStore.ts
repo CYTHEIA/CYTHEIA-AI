@@ -204,6 +204,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   setComponentProperty: (id, key, value) => {
+    get().pushHistory('Change component property');
     set((s) => ({
       components: s.components.map((c) => (c.id === id ? { ...c, props: { ...c.props, [key]: value } } : c)),
       saveStatus: 'unsaved',
@@ -246,6 +247,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   clearSelection: () => set({ selectedIds: [] }),
 
   updateCode: (index, content) => {
+    if (get().code[index]?.content === content) return;
+    get().pushHistory('Edit code');
     set((s) => ({
       code: s.code.map((f, i) => (i === index ? { ...f, content } : f)),
       saveStatus: 'unsaved',

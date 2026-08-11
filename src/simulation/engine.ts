@@ -2,6 +2,7 @@ import type { PlacedComponent, Connection, SimulationState, SimulationComponentS
 import { COMPONENT_MAP } from '@/components/library';
 import { ArduinoInterpreter } from './interpreter';
 import { uid } from '@/utils/uid';
+import { resolveNetworkState } from './network';
 
 export class SimulationEngine {
   private components: PlacedComponent[];
@@ -49,7 +50,7 @@ export class SimulationEngine {
       this.state.arduinoPins[pin] = {
         voltage: value ? 5 : 0,
         digital: value ? 'HIGH' : 'LOW',
-        analog: value * 1023,
+        analog: mode === 'pwm' ? value : value * 1023,
         pwm: mode === 'pwm' ? { duty: value / 255, frequency: 490 } : undefined,
       };
     };
@@ -155,74 +156,17 @@ export class SimulationEngine {
         let digital: 'HIGH' | 'LOW' | 'FLOATING' = 'FLOATING';
         let analog = 0;
 
-        // Check if connected to arduino pin
-        const conn = this.connections.find(
-          (c) =>
-            (c.fromComponent === comp.id && c.fromPin === pin.id) ||
-            (c.toComponent === comp.id && c.toPin === pin.id)
-        );
-
-        if (conn && arduino) {
-          const otherCompId = conn.fromComponent === comp.id ? conn.toComponent : conn.fromComponent;
-          const otherPinId = conn.fromComponent === comp.id ? conn.toPin : conn.fromPin;
-
-          if (otherCompId === arduino.id) {
-            // Connected to arduino pin
-            const match = otherPinId.match(/^d(\d+)$/);
-            if (match) {
-              const pinNum = parseInt(match[1]);
-              const val = this.interpreter?.getPinValue(pinNum) ?? 0;
-              voltage = val ? 5 : 0;
-              digital = val ? 'HIGH' : 'LOW';
-              analog = val * 1023;
-            }
-            if (otherPinId === '5v') {
-              voltage = 5;
-              digital = 'HIGH';
-              analog = 1023;
-            }
-            if (otherPinId === '3v3') {
-              voltage = 3.3;
-              digital = 'HIGH';
-              analog = 674;
-            }
-            if (otherPinId.startsWith('gnd')) {
-              voltage = 0;
-              digital = 'LOW';
-              analog = 0;
-            }
-          } else {
-            // Connected to another component
-            const otherComp = this.components.find((c) => c.id === otherCompId);
-            if (otherComp) {
-              if (otherComp.type === 'push-button') {
-                const pressed = otherComp.props.pressed;
-                if (pin.type === 'ground' || pin.id === 'c' || pin.id === '-') {
-                  voltage = 0;
-                  digital = 'LOW';
-                } else if (pressed) {
-                  voltage = 5;
-                  digital = 'HIGH';
-                  analog = 1023;
-                }
-              }
-              if (otherComp.type === 'power-5v' || (otherComp.type === 'battery' && otherComp.props.voltage >= 4)) {
-                voltage = 5;
-                digital = 'HIGH';
-                analog = 1023;
-              }
-              if (otherComp.type === 'power-3v3') {
-                voltage = 3.3;
-                digital = 'HIGH';
-                analog = 674;
-              }
-              if (otherComp.type === 'gnd') {
-                voltage = 0;
-                digital = 'LOW';
-              }
-            }
-          }
-        }
+        const resolved = resolveNetworkState({ componentId: comp.id, pinId: pin.id }, {
+          components: this.components,
+          connections: this.connections,
+          readArduinoPin: (pinNumber) => this.interpreter?.getPinValue(pinNumber) ?? 0,
+        });
+        voltage = resolved.voltage;
+        digital = resolved.digital;
+        analog = resolved.analog;
+        const pwm = pin.type === 'pwm' && analog > 0 && analog <= 255
+          ? { duty: analog / 255, frequency: 490 }
+          : undefined;
 
         // Self-powered components
         if (comp.type === 'power-5v' && pin.id === '+') {
@@ -242,7 +186,7 @@ export class SimulationEngine {
           digital = 'LOW';
         }
 
-        pins[pin.id] = { voltage, digital, analog };
+        pins[pin.id] = { voltage, digital, analog, pwm };
       }
 
       const visual = this.computeVisualState(comp, pins);
@@ -260,6 +204,7 @@ export class SimulationEngine {
         const a = pins['a'];
         const c = pins['c'];
         visual.lit = a?.digital === 'HIGH' && c?.digital === 'LOW';
+        visual.brightness = visual.lit ? Math.min(1, (a?.analog ?? 1023) / 1023) : 0;
         break;
       }
       case 'dc-motor': {
@@ -277,6 +222,9 @@ export class SimulationEngine {
         const sig = pins['sig'];
         if (sig?.pwm) {
           this.servoAngle = sig.pwm.duty * 180;
+          visual.angle = this.servoAngle;
+        } else if (sig?.analog > 0 && sig.analog <= 255) {
+          this.servoAngle = (sig.analog / 255) * 180;
           visual.angle = this.servoAngle;
         } else if (sig?.digital === 'HIGH') {
           visual.angle = 180;

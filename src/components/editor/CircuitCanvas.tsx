@@ -42,6 +42,7 @@ export function CircuitCanvas() {
   const [panning, setPanning] = useState(false);
   const [panStart, setPanStart] = useState<{ x: number; y: number; panX: number; panY: number } | null>(null);
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<ID | null>(null);
 
   const snap = useCallback(
     (v: number) => (snapToGrid ? Math.round(v / GRID_SIZE) * GRID_SIZE : v),
@@ -64,6 +65,7 @@ export function CircuitCanvas() {
     (e: React.MouseEvent) => {
       if (e.target === svgRef.current || (e.target as Element).tagName === 'rect' && (e.target as Element).getAttribute('data-grid') === 'true') {
         clearSelection();
+        setSelectedConnectionId(null);
         setWireStart(null);
       }
     },
@@ -97,7 +99,11 @@ export function CircuitCanvas() {
     (e: React.MouseEvent, id: ID) => {
       e.stopPropagation();
       if (wireStart) return;
-      selectComponent(id);
+      if (e.ctrlKey || e.metaKey) {
+        useProjectStore.getState().toggleSelect(id);
+      } else {
+        selectComponent(id);
+      }
     },
     [selectComponent, wireStart]
   );
@@ -109,10 +115,15 @@ export function CircuitCanvas() {
       const comp = components.find((c) => c.id === id);
       if (!comp) return;
       const world = screenToWorld(e.clientX, e.clientY);
+      if (e.ctrlKey || e.metaKey) {
+        useProjectStore.getState().toggleSelect(id);
+      } else if (!selectedIds.includes(id)) {
+        selectComponent(id);
+      }
+      pushHistory('Move component');
       setDragging({ id, offsetX: world.x - comp.x, offsetY: world.y - comp.y });
-      selectComponent(id);
     },
-    [components, screenToWorld, selectComponent, wireStart]
+    [components, screenToWorld, selectComponent, selectedIds, pushHistory, wireStart]
   );
 
   const handleMouseMove = useCallback(
@@ -137,13 +148,10 @@ export function CircuitCanvas() {
   );
 
   const handleMouseUp = useCallback(() => {
-    if (dragging) {
-      pushHistory('Move component');
-    }
     setDragging(null);
     setPanning(false);
     setPanStart(null);
-  }, [dragging, pushHistory]);
+  }, []);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -195,7 +203,10 @@ export function CircuitCanvas() {
         if (selectedIds.length === 1) rotateComponent(selectedIds[0]);
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedIds.length > 0) removeComponents(selectedIds);
+        if (selectedConnectionId) {
+          removeConnection(selectedConnectionId);
+          setSelectedConnectionId(null);
+        } else if (selectedIds.length > 0) removeComponents(selectedIds);
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
         e.preventDefault();
@@ -205,10 +216,46 @@ export function CircuitCanvas() {
         setWireStart(null);
         clearSelection();
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        const selected = useProjectStore.getState().components.filter((component) => selectedIds.includes(component.id));
+        if (selected.length > 0) {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('nexel-copy-components', { detail: selected }));
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('nexel-paste-components'));
+      }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedIds, rotateComponent, removeComponents, duplicateComponent, clearSelection]);
+  }, [selectedIds, selectedConnectionId, rotateComponent, removeComponents, removeConnection, duplicateComponent, clearSelection]);
+
+  useEffect(() => {
+    let clipboard: typeof components = [];
+    const onCopy = (event: Event) => {
+      clipboard = (event as CustomEvent<typeof components>).detail.map((component) => ({
+        ...component,
+        props: { ...component.props },
+      }));
+    };
+    const onPaste = () => {
+      const pastedIds = clipboard.map((component) => {
+        const id = addComponent(component.type, component.x + GRID_SIZE, component.y + GRID_SIZE);
+        return id;
+      }).filter((id): id is ID => Boolean(id));
+      if (pastedIds.length > 0) {
+        useProjectStore.getState().selectMany(pastedIds);
+      }
+    };
+    window.addEventListener('nexel-copy-components', onCopy);
+    window.addEventListener('nexel-paste-components', onPaste);
+    return () => {
+      window.removeEventListener('nexel-copy-components', onCopy);
+      window.removeEventListener('nexel-paste-components', onPaste);
+    };
+  }, [addComponent, components]);
 
   // Auto-place dragging component from library
   useEffect(() => {
@@ -275,7 +322,7 @@ export function CircuitCanvas() {
                 <path
                   d={path}
                   fill="none"
-                  stroke={isActive ? '#ffd60a' : '#48484a'}
+                  stroke={selectedConnectionId === conn.id ? '#0a84ff' : isActive ? '#ffd60a' : '#48484a'}
                   strokeWidth={isActive ? 2.5 : 2}
                   className="transition-all"
                   style={{ filter: isActive ? 'drop-shadow(0 0 4px rgba(255,214,10,0.5))' : 'none' }}
@@ -288,8 +335,7 @@ export function CircuitCanvas() {
                   className="cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
-                    removeConnection(conn.id);
-                    addToast('Connection removed', 'info');
+                    setSelectedConnectionId(conn.id);
                   }}
                 />
               </g>
@@ -317,6 +363,7 @@ export function CircuitCanvas() {
               hoveredPin={hoveredPin}
               onPinClick={(pinId, e) => handlePinClick(comp.id, pinId, e)}
               onComponentClick={(e) => handleComponentClick(e, comp.id)}
+              onComponentMouseDown={(e) => handleComponentMouseDown(e, comp.id)}
               showPinLabels={true}
             />
           ))}

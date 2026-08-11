@@ -7,6 +7,7 @@ import { useUIStore } from '@/store/uiStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSimulationStore } from '@/store/simulationStore';
 import { parseAICommand, buildContextString } from '@/services/aiAssistant';
+import { COMPONENT_MAP } from '@/components/library';
 import type { AIMessage, AIAction } from '@/types';
 import { uid } from '@/utils/uid';
 
@@ -318,9 +319,16 @@ function AIAssistant() {
     pushHistory('AI modifications');
     for (const action of actions) {
       switch (action.type) {
-        case 'ADD_COMPONENT':
-          addComponent(action.params.type, action.params.x, action.params.y);
+        case 'ADD_COMPONENT': {
+          const addedId = addComponent(action.params.type, action.params.x, action.params.y);
+          const requestedPin = action.description.match(/pin (\d+)/i)?.[1];
+          const arduino = useProjectStore.getState().components.find((component) => component.type.startsWith('arduino'));
+          if (addedId && requestedPin && arduino) {
+            const pin = defaultComponentPin(action.params.type);
+            if (pin) addConnection({ component: arduino.id, pin: `d${requestedPin}` }, { component: addedId, pin });
+          }
           break;
+        }
         case 'REMOVE_COMPONENT':
           removeComponent(action.params.id);
           break;
@@ -331,23 +339,40 @@ function AIAssistant() {
           updateCode(0, action.params.code);
           break;
         case 'CONNECT':
-          // Find components by type or pin reference
-          const fromParts = action.params.from.match(/pin\s*(\d+)/i);
-          const toParts = action.params.to.match(/pin\s*(\d+)/i);
-          if (fromParts && toParts) {
-            const arduino = components.find((c) => c.type.startsWith('arduino'));
-            if (arduino) {
-              addConnection(
-                { component: arduino.id, pin: `d${fromParts[1]}` },
-                { component: arduino.id, pin: `d${toParts[1]}` }
-              );
-            }
-          }
+          const from = resolveConnectionReference(action.params.from);
+          const to = resolveConnectionReference(action.params.to);
+          if (from && to) addConnection(from, to);
           break;
       }
     }
     setPendingActions(null);
     addToast('AI changes applied', 'success');
+  }
+
+  function resolveConnectionReference(reference: string): { component: string; pin: string } | null {
+    const lower = reference.toLowerCase();
+    const liveComponents = useProjectStore.getState().components;
+    const pinNumber = lower.match(/(?:arduino\s+)?(?:pin|d)\s*(\d+)/)?.[1];
+    if (pinNumber) {
+      const arduino = liveComponents.find((component) => component.type.startsWith('arduino'));
+      return arduino ? { component: arduino.id, pin: `d${pinNumber}` } : null;
+    }
+    const component = liveComponents.find((item) => {
+      const label = COMPONENT_MAP[item.type]?.label.toLowerCase() || item.type;
+      return lower.includes(label) || lower.includes(item.type) || (lower.includes('ground') && item.type === 'gnd');
+    });
+    if (!component) return null;
+    if (lower.includes('ground') || lower.includes('gnd')) {
+      return { component: component.id, pin: COMPONENT_MAP[component.type]?.pins.find((pin) => pin.type === 'ground' || pin.id === '-' || pin.id === 'gnd')?.id || 'gnd' };
+    }
+    return { component: component.id, pin: defaultComponentPin(component.type) || COMPONENT_MAP[component.type]?.pins[0]?.id || '' };
+  }
+
+  function defaultComponentPin(type: string): string | null {
+    if (type === 'led' || type === 'diode') return 'a';
+    if (type === 'resistor') return 'a';
+    if (type === 'buzzer' || type === 'servo' || type === 'dc-motor') return COMPONENT_MAP[type]?.pins[0]?.id || null;
+    return COMPONENT_MAP[type]?.pins.find((pin) => pin.type !== 'ground' && pin.type !== 'power')?.id || null;
   }
 
   function dismissActions() {

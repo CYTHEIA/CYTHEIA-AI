@@ -8,6 +8,7 @@ interface RenderProps {
   hoveredPin?: string | null;
   onPinClick?: (pinId: string, e: React.MouseEvent) => void;
   onComponentClick?: (e: React.MouseEvent) => void;
+  onComponentMouseDown?: (e: React.MouseEvent) => void;
   showPinLabels?: boolean;
 }
 
@@ -27,7 +28,7 @@ export function getPinWorldPosition(component: PlacedComponent, pinId: string): 
   return { x: component.x + rx, y: component.y + ry };
 }
 
-export function ComponentRenderer({ component, simState, selected, hoveredPin, onPinClick, onComponentClick, showPinLabels }: RenderProps) {
+export function ComponentRenderer({ component, simState, selected, hoveredPin, onPinClick, onComponentClick, onComponentMouseDown, showPinLabels }: RenderProps) {
   const def = COMPONENT_MAP[component.type];
   if (!def) return null;
 
@@ -38,6 +39,7 @@ export function ComponentRenderer({ component, simState, selected, hoveredPin, o
     <g
       transform={`translate(${component.x - cx}, ${component.y - cy}) rotate(${component.rotation}, ${cx}, ${cy})`}
       onClick={onComponentClick}
+      onMouseDown={onComponentMouseDown}
       className="cursor-pointer"
     >
       <rect

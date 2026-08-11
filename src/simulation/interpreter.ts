@@ -1,5 +1,6 @@
 import type { PlacedComponent, Connection, SimulationState, SimulationComponentState, SimulationPinState } from '@/types';
 import { COMPONENT_MAP } from '@/components/library';
+import { resolveNetworkState } from './network';
 
 export interface InterpreterConfig {
   components: PlacedComponent[];
@@ -31,6 +32,8 @@ export class ArduinoInterpreter {
   // Compiled functions
   private setupFn: (() => void) | null = null;
   private loopFn: (() => void) | null = null;
+  private loopChunks: (() => void)[] = [];
+  private loopChunkIndex = 0;
 
   // Running state
   private running: boolean = false;
@@ -68,8 +71,8 @@ export class ArduinoInterpreter {
         return { success: false, errors };
       }
 
-      const setupBody = setupMatch[1];
-      const loopBody = loopMatch[1];
+      const setupBody = normalizeArduinoSyntax(setupMatch[1]);
+      const loopBody = normalizeArduinoSyntax(loopMatch[1]);
 
       // Build runtime API
       const api = this.createRuntimeAPI();
@@ -86,10 +89,12 @@ export class ArduinoInterpreter {
 
       // Compile loop
       try {
-        this.loopFn = new Function(
+        const loopSegments = splitAtDelays(loopBody);
+        this.loopChunks = loopSegments.map((segment) => new Function(
           ...Object.keys(api),
-          loopBody
-        ).bind(null, ...Object.values(api));
+          segment
+        ).bind(null, ...Object.values(api)));
+        this.loopFn = this.loopChunks[0] ?? null;
       } catch (e: any) {
         errors.push(`Loop error: ${e.message}`);
       }
@@ -193,8 +198,6 @@ export class ArduinoInterpreter {
       A3: 17,
       A4: 18,
       A5: 19,
-      true: true,
-      false: false,
       Serial1: {
         begin: () => {},
         print: () => {},
@@ -208,34 +211,12 @@ export class ArduinoInterpreter {
     const arduino = this.components.find((c) => c.type.startsWith('arduino'));
     if (!arduino) return 0;
 
-    const pinId = `d${pin}`;
-    // Find connections to this pin
-    const conns = this.connections.filter(
-      (c) => (c.fromComponent === arduino.id && c.fromPin === pinId) || (c.toComponent === arduino.id && c.toPin === pinId)
-    );
-
-    for (const conn of conns) {
-      const otherCompId = conn.fromComponent === arduino.id ? conn.toComponent : conn.fromComponent;
-      const otherPinId = conn.fromComponent === arduino.id ? conn.toPin : conn.fromPin;
-      const otherComp = this.components.find((c) => c.id === otherCompId);
-      if (!otherComp) continue;
-
-      if (otherComp.type === 'push-button') {
-        return otherComp.props.pressed ? 1 : 0;
-      }
-      if (otherComp.type === 'switch') {
-        return otherComp.props.closed ? 1 : 0;
-      }
-      if (otherComp.type === 'pir-sensor') {
-        return otherComp.props.motion ? 1 : 0;
-      }
-      if (otherComp.type === 'ir-sensor') {
-        return otherComp.props.detected ? 1 : 0;
-      }
-      if (otherComp.type === 'ultrasonic-sensor' && otherPinId === 'echo') {
-        return 1;
-      }
-    }
+    const state = resolveNetworkState({ componentId: arduino.id, pinId: `d${pin}` }, {
+      components: this.components,
+      connections: this.connections,
+      readArduinoPin: (pinNumber) => this.pinValues.get(pinNumber) ?? 0,
+    });
+    if (state.digital !== 'FLOATING') return state.digital === 'HIGH' ? 1 : 0;
 
     // Check pullup
     const mode = this.pinModes.get(pin);
@@ -270,6 +251,13 @@ export class ArduinoInterpreter {
       }
     }
 
+    const state = resolveNetworkState({ componentId: arduino.id, pinId }, {
+      components: this.components,
+      connections: this.connections,
+      readArduinoPin: (pinNumber) => this.pinValues.get(pinNumber) ?? 0,
+    });
+    if (state.analog > 0) return state.analog;
+
     return 0;
   }
 
@@ -284,6 +272,7 @@ export class ArduinoInterpreter {
     this.startTime = Date.now();
     this.loopCount = 0;
     this.delayRemaining = 0;
+    this.loopChunkIndex = 0;
     try {
       this.setupFn?.();
     } catch (e: any) {
@@ -298,10 +287,13 @@ export class ArduinoInterpreter {
     if (this.delayRemaining > 0) {
       this.delayRemaining -= deltaMs * this.speed;
       if (this.delayRemaining > 0) return;
+      this.loopChunkIndex = (this.loopChunkIndex + 1) % Math.max(1, this.loopChunks.length);
     }
 
     try {
-      this.loopFn?.();
+      const chunk = this.loopChunks[this.loopChunkIndex] ?? this.loopFn;
+      chunk?.();
+      if (this.delayRemaining <= 0) this.loopChunkIndex = (this.loopChunkIndex + 1) % Math.max(1, this.loopChunks.length);
       this.loopCount++;
     } catch (e: any) {
       this.onError(`Loop runtime error: ${e.message}`);
@@ -340,4 +332,25 @@ export class ArduinoInterpreter {
   getPinMode(pin: number): string | undefined {
     return this.pinModes.get(pin);
   }
+}
+
+function normalizeArduinoSyntax(body: string): string {
+  return body
+    .replace(/\b(const\s+)?(?:unsigned\s+)?(?:long|int|float|double|bool|boolean|byte|String)\s+([A-Za-z_$][\w$]*)/g, (_match, qualifier: string | undefined, name: string) => {
+      return `${qualifier ? 'const' : 'let'} ${name}`;
+    })
+    .replace(/#define\s+([A-Za-z_$][\w$]*)\s+([^\n]+)/g, 'const $1 = $2');
+}
+
+function splitAtDelays(body: string): string[] {
+  const segments: string[] = [];
+  const delayPattern = /delay(?:Microseconds)?\s*\([^;]+\)\s*;/g;
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+  while ((match = delayPattern.exec(body))) {
+    segments.push(`${body.slice(cursor, match.index)}${match[0]}`);
+    cursor = match.index + match[0].length;
+  }
+  segments.push(body.slice(cursor));
+  return segments.length > 0 ? segments : [body];
 }
