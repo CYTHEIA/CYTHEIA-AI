@@ -454,7 +454,7 @@ function OledSVG({ component }: { component: PlacedComponent }) {
     <g>
       <rect x={0} y={0} width={160} height={120} rx={4} fill="#1a1a1a" stroke="#333" strokeWidth={2} />
       <rect x={15} y={15} width={130} height={90} rx={2} fill="#0a0a0a" />
-      <text x={80} y={60} textAnchor="middle" fill="#30d158" style={{ fontSize: '10px', fontFamily: 'monospace' }}>{component.props.text || 'Nextel AI'}</text>
+      <text x={80} y={60} textAnchor="middle" fill="#30d158" style={{ fontSize: '10px', fontFamily: 'monospace' }}>{component.props.text || 'NEXEL AI'}</text>
     </g>
   );
 }

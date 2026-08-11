@@ -284,7 +284,7 @@ function getEditableProps(type: string) {
       props.push({ key: 'text', label: 'Display Text', type: 'text', default: 'Hello, World!' });
       break;
     case 'oled':
-      props.push({ key: 'text', label: 'Display Text', type: 'text', default: 'Nextel AI' });
+      props.push({ key: 'text', label: 'Display Text', type: 'text', default: 'NEXEL AI' });
       break;
     case 'seven-segment':
       props.push({ key: 'value', label: 'Digit (0-9)', type: 'slider', default: 0, min: 0, max: 9, step: 1, format: (v) => String(Math.round(v)) });

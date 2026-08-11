@@ -33,7 +33,7 @@ export function PlansPage() {
             <ArrowLeft size={18} className="text-gray-400" />
           </button>
           <NextelLogo size={28} />
-          <span className="text-lg font-semibold tracking-tight">Nextel AI</span>
+          <span className="text-lg font-semibold tracking-tight">NEXEL AI</span>
         </div>
         <button
           onClick={() => setView('dashboard')}
@@ -139,7 +139,7 @@ export function PlansPage() {
       </section>
 
       <footer className="relative z-10 px-8 py-8 border-t border-white/5 text-center text-sm text-gray-500">
-        Nextel AI — Electronics design, simulation, and learning platform
+        NEXEL AI — Electronics design, simulation, and learning platform
       </footer>
     </div>
   );

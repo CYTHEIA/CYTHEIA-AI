@@ -112,7 +112,7 @@ export function CommandPalette() {
     },
     {
       id: 'open-ai',
-      label: 'Open Nextel AI Assistant',
+      label: 'Open NEXEL AI Assistant',
       category: 'View',
       action: () => {
         setBottomTab('ai');

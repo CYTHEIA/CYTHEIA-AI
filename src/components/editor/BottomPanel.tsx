@@ -58,7 +58,7 @@ export function BottomPanel() {
           <TabButton icon={Code2} label="Code" active={tab === 'code'} onClick={() => setTab('code')} />
           <TabButton icon={Terminal} label="Serial Monitor" active={tab === 'serial'} onClick={() => setTab('serial')} />
           <TabButton icon={Bug} label="Console" active={tab === 'console'} onClick={() => setTab('console')} />
-          <TabButton icon={Brain} label="Nextel AI" active={tab === 'ai'} onClick={() => setTab('ai')} />
+          <TabButton icon={Brain} label="NEXEL AI" active={tab === 'ai'} onClick={() => setTab('ai')} />
         </div>
         <button onClick={toggle} className="p-1.5 text-gray-400 hover:text-white hover:bg-white/5 rounded transition-colors">
           <ChevronDown size={16} />
@@ -247,7 +247,7 @@ function AIAssistant() {
     {
       id: uid(),
       role: 'assistant',
-      content: 'Hi! I\'m Nextel AI. I can help you build circuits, write code, and debug your projects. Try asking me to "Add an LED to pin 13" or "Write code to blink an LED".',
+      content: 'Hi! I\'m NEXEL AI. I can help you build circuits, write code, and debug your projects. Try asking me to "Add an LED to pin 13" or "Write code to blink an LED".',
     },
   ]);
   const [input, setInput] = useState('');
@@ -424,7 +424,7 @@ function AIAssistant() {
                 handleSend();
               }
             }}
-            placeholder="Ask Nextel AI... (e.g. 'Add an LED to pin 13')"
+            placeholder="Ask NEXEL AI... (e.g. 'Add an LED to pin 13')"
             rows={1}
             className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 resize-none"
           />

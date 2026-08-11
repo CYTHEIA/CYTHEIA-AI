@@ -22,7 +22,7 @@ export function LandingPage() {
       <nav className="relative z-10 flex items-center justify-between px-8 py-5">
         <div className="flex items-center gap-2.5">
           <NextelLogo size={32} />
-          <span className="text-lg font-semibold tracking-tight">Nextel AI</span>
+          <span className="text-lg font-semibold tracking-tight">NEXEL AI</span>
         </div>
         <div className="flex items-center gap-8 text-sm text-gray-400">
           <a href="#features" className="hover:text-white transition-colors">Features</a>
@@ -86,7 +86,7 @@ export function LandingPage() {
           <FeatureCard icon={Code2} title="Write code" desc="Professional Monaco code editor with Arduino C++ syntax highlighting. Write setup() and loop() — your code drives the simulation." />
           <FeatureCard icon={Play} title="Simulate" desc="Run your circuit and watch LEDs illuminate, motors rotate, displays update. The simulator executes your real Arduino code." />
           <FeatureCard icon={Bug} title="Debug" desc="Intelligent debugging detects floating inputs, missing grounds, short circuits, and code errors — with clear explanations." />
-          <FeatureCard icon={Brain} title="Learn with AI" desc="Ask Nextel AI to add components, generate code, explain circuits, or find wiring problems. Every change is previewable and undoable." />
+          <FeatureCard icon={Brain} title="Learn with AI" desc="Ask NEXEL AI to add components, generate code, explain circuits, or find wiring problems. Every change is previewable and undoable." />
           <FeatureCard icon={History} title="Save every version" desc="Automatic version history lets you restore any point in your project's evolution. Never lose your work." />
         </div>
       </section>
@@ -114,13 +114,13 @@ export function LandingPage() {
             onClick={() => setView('dashboard')}
             className="px-8 py-4 bg-white text-black rounded-xl font-semibold hover:scale-105 transition-transform text-lg"
           >
-            Launch Nextel AI Studio
+            Launch NEXEL AI Studio
           </button>
         </div>
       </section>
 
       <footer className="relative z-10 px-8 py-8 border-t border-white/5 text-center text-sm text-gray-500">
-        Nextel AI — Electronics design, simulation, and learning platform
+        NEXEL AI — Electronics design, simulation, and learning platform
       </footer>
     </div>
   );

@@ -122,7 +122,7 @@ export function Dashboard() {
             <ArrowLeft size={18} className="text-gray-400" />
           </button>
           <NextelLogo size={28} />
-          <span className="text-lg font-semibold tracking-tight">Nextel AI</span>
+          <span className="text-lg font-semibold tracking-tight">NEXEL AI</span>
         </div>
         <div className="flex items-center gap-3">
           <label className="px-3 py-2 text-sm text-gray-400 hover:text-white border border-white/10 rounded-lg hover:bg-white/5 transition-all cursor-pointer flex items-center gap-2">
