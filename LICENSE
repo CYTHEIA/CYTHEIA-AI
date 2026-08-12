@@ -4,16 +4,79 @@ PROPRIETARY SOFTWARE LICENSE
 Copyright © 2026 Daksh Sagar Gaikwad
 All Rights Reserved.
 
-1. RIGHTS HOLDER
+1. RIGHTS AND COPYRIGHT
 
-This repository contains proprietary software and development materials
-created and maintained by Daksh Sagar Gaikwad.
+This repository contains proprietary software, source code, technical
+implementations, documentation, designs, and other development materials.
 
-To the extent permitted by applicable law, Daksh Sagar Gaikwad retains
-the copyright and intellectual-property rights in the original source
-code, technical implementation, software architecture, documentation,
-and design implementation, and other original materials authored by him.
+Copyright and intellectual-property rights in original materials are
+retained by their respective author(s) to the extent permitted by
+applicable law and any written agreement between the contributors.
 
-This repository is not released as open-source software.
+Nothing in this LICENSE, by itself, determines the ownership, equity,
+founder status, or intellectual-property allocation between contributors
+to CYTHEIA.
 
-2. LICENSE GRANT
+2. NO OPEN-SOURCE LICENSE
+
+This repository is not released under an open-source license.
+
+No general permission is granted to any person to copy, modify, publish,
+distribute, sublicense, sell, or commercially exploit the software or
+repository materials.
+
+3. PRE-EXISTING AND THIRD-PARTY MATERIALS
+
+Nothing in this LICENSE transfers ownership of:
+
+(a) pre-existing intellectual property owned by a contributor before
+    contributing it to CYTHEIA;
+
+(b) third-party libraries, frameworks, assets, or software governed by
+    their respective licenses; or
+
+(c) intellectual property whose ownership is otherwise determined by a
+    valid written agreement.
+
+4. CONTRIBUTOR RIGHTS
+
+Access to, contribution to, administration of, or collaboration on this
+repository does not by itself transfer ownership of the repository,
+CYTHEIA project, or another contributor's intellectual property.
+
+Repository permissions and administrative access are separate from
+copyright ownership, founder equity, and company ownership.
+
+5. NO IMPLIED TRANSFER
+
+No ownership, assignment, license, equity interest, or other proprietary
+right is granted or transferred merely by accessing, contributing to,
+editing, reviewing, or administering this repository.
+
+Any assignment or transfer of intellectual property must be established
+through an applicable written agreement or other legally valid instrument.
+
+6. CYTHEIA FOUNDERS
+
+The relationship between contributors/founders of CYTHEIA, including
+ownership, equity, intellectual property, domain ownership, repository
+control, contributions, and decision-making rights, shall be governed by
+the applicable written founders' agreement and, where applicable, the
+definitive company or shareholder documentation.
+
+7. RESERVATION OF RIGHTS
+
+All rights not expressly granted under this LICENSE are reserved by the
+applicable rights holder.
+
+This LICENSE does not override any mandatory rights or obligations imposed
+by applicable law or any valid written agreement.
+
+8. NOTICE
+
+Written permission should be obtained before using proprietary materials
+from this repository outside permissions expressly granted by applicable
+law or a valid written agreement.
+
+Effective Date: 12 August 2026
+Project: CYTHEIA / NEXEL AI
