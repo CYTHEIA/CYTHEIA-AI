@@ -55,8 +55,7 @@ export function LeftSidebar() {
         {tab === 'templates' && <TemplatesTab />}
         {tab === 'favorites' && <FavoritesTab />}
         {tab === 'history' && <HistoryTab />}
-        {tab === 'plans' && <PlansTab />}
-      </div>
+{tab === 'plans' && <PlansSidebarTab />}      </div>
     </div>
   );
 }
@@ -276,8 +275,7 @@ function TemplatesTab() {
               key={t.id}
               onClick={async () => {
                 try {
-                  const p = await createProject(t.name, t.description, t.data);
-                  loadProject(p);
+const p = await createProject(t.name, t.description ?? '', t.data);                  loadProject(p);
                   setView('editor');
                   addToast(`Created "${p.name}" from template`, 'success');
                 } catch {
@@ -353,6 +351,23 @@ function HistoryTab() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+function PlansSidebarTab() {
+  const setView = useUIStore((s) => s.setView);
+
+  return (
+    <div className="p-4">
+      <p className="text-sm text-gray-400 mb-3">
+        Manage your CYTHEIA plan and features.
+      </p>
+      <button
+        onClick={() => setView('plans')}
+        className="w-full px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition-colors"
+      >
+        View Plans
+      </button>
     </div>
   );
 }

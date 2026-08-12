@@ -49,8 +49,7 @@ export function Dashboard() {
 
   async function handleNewFromTemplate(template: Project) {
     try {
-      const p = await createProject(template.name, template.description, template.data);
-      loadProject(p);
+const p = await createProject(template.name, template.description ?? '', template.data);      loadProject(p);
       setView('editor');
       addToast(`Created "${p.name}"`, 'success');
     } catch {
