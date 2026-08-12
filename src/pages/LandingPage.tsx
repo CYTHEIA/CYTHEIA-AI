@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Cpu, Code2, Play, Bug, Brain, History, ArrowRight, Zap } from 'lucide-react';
+import Cpu from 'lucide-react/dist/esm/icons/cpu.js';
+import Code2 from 'lucide-react/dist/esm/icons/code-2.js';
+import Play from 'lucide-react/dist/esm/icons/play.js';
+import Bug from 'lucide-react/dist/esm/icons/bug.js';
+import Brain from 'lucide-react/dist/esm/icons/brain.js';
+import History from 'lucide-react/dist/esm/icons/history.js';
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right.js';
+import Zap from 'lucide-react/dist/esm/icons/zap.js';
 import { useUIStore } from '@/store/uiStore';
 
 export function LandingPage() {

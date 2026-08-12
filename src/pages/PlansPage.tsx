@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { ArrowLeft, Check, Sparkles, Zap, Brain, Code2, Bug, Folder, HardDrive, X } from 'lucide-react';
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left.js';
+import Check from 'lucide-react/dist/esm/icons/check.js';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles.js';
+import Zap from 'lucide-react/dist/esm/icons/zap.js';
+import Brain from 'lucide-react/dist/esm/icons/brain.js';
+import Code2 from 'lucide-react/dist/esm/icons/code-2.js';
+import Bug from 'lucide-react/dist/esm/icons/bug.js';
+import Folder from 'lucide-react/dist/esm/icons/folder.js';
+import HardDrive from 'lucide-react/dist/esm/icons/hard-drive.js';
+import X from 'lucide-react/dist/esm/icons/x.js';
 import { useUIStore } from '@/store/uiStore';
 import { useSubscriptionStore, PLANS, PLAN_LIMITS } from '@/store/subscriptionStore';
 import { NextelLogo } from './LandingPage';

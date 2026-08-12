@@ -1,4 +1,5 @@
 import type { PlacedComponent, Connection, SimulationState, SimulationComponentState, SimulationPinState } from '@/types';
+import type { EnvironmentObject } from '@/types';
 import { COMPONENT_MAP } from '@/components/library';
 import { ArduinoInterpreter } from './interpreter';
 import { uid } from '@/utils/uid';
@@ -7,6 +8,7 @@ import { resolveNetworkState } from './network';
 export class SimulationEngine {
   private components: PlacedComponent[];
   private connections: Connection[];
+  private environment: EnvironmentObject[];
   private interpreter: ArduinoInterpreter | null = null;
   private state: SimulationState;
   private running: boolean = false;
@@ -27,17 +29,19 @@ export class SimulationEngine {
       errors: [],
       arduinoPins: {},
     };
+    this.environment = [];
   }
 
   setOnStateUpdate(cb: (state: SimulationState) => void) {
     this.onStateUpdate = cb;
   }
 
-  load(components: PlacedComponent[], connections: Connection[], code: string, speed: number) {
+  load(components: PlacedComponent[], connections: Connection[], code: string, speed: number, environment: EnvironmentObject[] = []) {
     this.components = components;
     this.connections = connections;
+    this.environment = environment;
     this.speed = speed;
-    this.interpreter = new ArduinoInterpreter({ components, connections, code, speed });
+    this.interpreter = new ArduinoInterpreter({ components, connections, code, speed, environment });
     this.interpreter.onSerialOutput = (text) => {
       this.state.serialOutput.push({ id: uid(), text, timestamp: Date.now() } as any);
       this.onStateUpdate(this.state);
@@ -190,6 +194,8 @@ export class SimulationEngine {
       }
 
       const visual = this.computeVisualState(comp, pins);
+      if (comp.type === 'ultrasonic-sensor') visual.distance = this.getNearestObstacleDistance(comp);
+      if (comp.type === 'ir-sensor') visual.detected = this.isObstacleNear(comp);
       compStates[comp.id] = { componentId: comp.id, pins, visual };
     }
 
@@ -274,5 +280,15 @@ export class SimulationEngine {
 
   clearErrors() {
     this.state.errors = [];
+  }
+
+  private getNearestObstacleDistance(sensor: PlacedComponent): number {
+    const obstacles = this.environment.filter((object) => ['obstacle', 'wall', 'box', 'moving-obstacle', 'reflective-surface'].includes(object.type));
+    if (obstacles.length === 0) return Number(sensor.props.range ?? 400);
+    return Math.min(...obstacles.map((object) => Math.max(1, Math.hypot(object.x - sensor.x, object.y - sensor.y) / 4)));
+  }
+
+  private isObstacleNear(sensor: PlacedComponent): boolean {
+    return this.getNearestObstacleDistance(sensor) <= Number(sensor.props.detectionRange ?? 20);
   }
 }

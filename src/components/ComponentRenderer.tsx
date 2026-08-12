@@ -138,11 +138,11 @@ function ComponentSVG({ type, component, simState }: { type: string; component: 
     case 'light-sensor':
       return <LightSensorSVG component={component} />;
     case 'ultrasonic-sensor':
-      return <UltrasonicSVG component={component} />;
+      return <UltrasonicSVG component={component} simState={simState} />;
     case 'pir-sensor':
       return <PirSVG component={component} />;
     case 'ir-sensor':
-      return <IrSVG component={component} />;
+      return <IrSVG component={component} simState={simState} />;
     case 'battery':
       return <BatterySVG component={component} />;
     case 'power-5v':
@@ -527,7 +527,8 @@ function LightSensorSVG({ component }: { component: PlacedComponent }) {
   );
 }
 
-function UltrasonicSVG({ component }: { component: PlacedComponent }) {
+function UltrasonicSVG({ component, simState }: { component: PlacedComponent; simState?: SimulationComponentState }) {
+  const distance = simState?.visual?.distance ?? component.props.distance ?? 0;
   return (
     <g>
       <rect x={0} y={0} width={120} height={80} rx={6} fill="#1a5c9e" stroke="#0d3d6b" strokeWidth={2} />
@@ -536,7 +537,7 @@ function UltrasonicSVG({ component }: { component: PlacedComponent }) {
       <circle cx={95} cy={40} r={15} fill="#0d3d6b" stroke="#fff" strokeWidth={1} />
       <circle cx={95} cy={40} r={8} fill="#1a5c9e" />
       <text x={60} y={15} textAnchor="middle" fill="#fff" style={{ fontSize: '7px', fontWeight: 'bold' }}>HC-SR04</text>
-      <text x={60} y={70} textAnchor="middle" fill="#fff" style={{ fontSize: '7px' }}>{component.props.distance || 0}cm</text>
+      <text x={60} y={70} textAnchor="middle" fill="#fff" style={{ fontSize: '7px' }}>{Math.round(distance)}cm</text>
     </g>
   );
 }
@@ -552,8 +553,8 @@ function PirSVG({ component }: { component: PlacedComponent }) {
   );
 }
 
-function IrSVG({ component }: { component: PlacedComponent }) {
-  const detected = component.props.detected;
+function IrSVG({ component, simState }: { component: PlacedComponent; simState?: SimulationComponentState }) {
+  const detected = simState?.visual?.detected ?? component.props.detected;
   return (
     <g>
       <rect x={5} y={5} width={60} height={60} rx={4} fill="#1a5c9e" stroke="#0d3d6b" strokeWidth={2} />

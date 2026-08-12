@@ -1,8 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
-import {
-  Code2, Terminal, Bug, Brain, Send, Trash2, X, ChevronDown, ChevronUp,
-} from 'lucide-react';
+import Code2 from 'lucide-react/dist/esm/icons/code-2.js';
+import Terminal from 'lucide-react/dist/esm/icons/terminal.js';
+import Bug from 'lucide-react/dist/esm/icons/bug.js';
+import Brain from 'lucide-react/dist/esm/icons/brain.js';
+import Send from 'lucide-react/dist/esm/icons/send.js';
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js';
+import X from 'lucide-react/dist/esm/icons/x.js';
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.js';
+import ChevronUp from 'lucide-react/dist/esm/icons/chevron-up.js';
 import { useUIStore } from '@/store/uiStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSimulationStore } from '@/store/simulationStore';

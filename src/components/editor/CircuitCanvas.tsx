@@ -4,7 +4,8 @@ import { useUIStore } from '@/store/uiStore';
 import { useSimulationStore } from '@/store/simulationStore';
 import { ComponentRenderer, getPinWorldPosition } from '@/components/ComponentRenderer';
 import { COMPONENT_MAP } from '@/components/library';
-import type { ID } from '@/types';
+import type { EnvironmentObject, EnvironmentObjectType, ID } from '@/types';
+import { classifyConnection } from '@/simulation/wireClassification';
 
 const GRID_SIZE = 20;
 
@@ -23,6 +24,10 @@ export function CircuitCanvas() {
   const addConnection = useProjectStore((s) => s.addConnection);
   const removeConnection = useProjectStore((s) => s.removeConnection);
   const pushHistory = useProjectStore((s) => s.pushHistory);
+  const environment = useProjectStore((s) => s.environment);
+  const addEnvironmentObject = useProjectStore((s) => s.addEnvironmentObject);
+  const moveEnvironmentObject = useProjectStore((s) => s.moveEnvironmentObject);
+  const removeEnvironmentObject = useProjectStore((s) => s.removeEnvironmentObject);
 
   const showGrid = useUIStore((s) => s.showGrid);
   const snapToGrid = useUIStore((s) => s.snapToGrid);
@@ -43,6 +48,9 @@ export function CircuitCanvas() {
   const [panStart, setPanStart] = useState<{ x: number; y: number; panX: number; panY: number } | null>(null);
   const [hoveredPin, setHoveredPin] = useState<string | null>(null);
   const [selectedConnectionId, setSelectedConnectionId] = useState<ID | null>(null);
+  const [hoveredConnectionId, setHoveredConnectionId] = useState<ID | null>(null);
+  const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<ID | null>(null);
+  const [draggingEnvironment, setDraggingEnvironment] = useState<{ id: ID; offsetX: number; offsetY: number } | null>(null);
 
   const snap = useCallback(
     (v: number) => (snapToGrid ? Math.round(v / GRID_SIZE) * GRID_SIZE : v),
@@ -66,6 +74,7 @@ export function CircuitCanvas() {
       if (e.target === svgRef.current || (e.target as Element).tagName === 'rect' && (e.target as Element).getAttribute('data-grid') === 'true') {
         clearSelection();
         setSelectedConnectionId(null);
+        setSelectedEnvironmentId(null);
         setWireStart(null);
       }
     },
@@ -136,6 +145,9 @@ export function CircuitCanvas() {
         const newY = snap(world.y - dragging.offsetY);
         moveComponent(dragging.id, newX, newY);
       }
+      if (draggingEnvironment) {
+        moveEnvironmentObject(draggingEnvironment.id, snap(world.x - draggingEnvironment.offsetX), snap(world.y - draggingEnvironment.offsetY));
+      }
 
       if (panning && panStart) {
         setPan({
@@ -144,11 +156,12 @@ export function CircuitCanvas() {
         });
       }
     },
-    [screenToWorld, dragging, snap, moveComponent, panning, panStart, setPan]
+    [screenToWorld, dragging, draggingEnvironment, snap, moveComponent, moveEnvironmentObject, panning, panStart, setPan]
   );
 
   const handleMouseUp = useCallback(() => {
     setDragging(null);
+    setDraggingEnvironment(null);
     setPanning(false);
     setPanStart(null);
   }, []);
@@ -182,8 +195,14 @@ export function CircuitCanvas() {
     (e: React.DragEvent) => {
       e.preventDefault();
       const type = e.dataTransfer.getData('component-type');
+      const environmentType = e.dataTransfer.getData('environment-type');
+      const world = screenToWorld(e.clientX, e.clientY);
+      if (environmentType) {
+        addEnvironmentObject(environmentType as EnvironmentObjectType, snap(world.x), snap(world.y));
+        addToast(`Added ${environmentType.replace(/-/g, ' ')}`, 'success');
+        return;
+      }
       if (type && COMPONENT_MAP[type]) {
-        const world = screenToWorld(e.clientX, e.clientY);
         addComponent(type, snap(world.x), snap(world.y));
         addToast(`Added ${COMPONENT_MAP[type].label}`, 'success');
       }
@@ -198,7 +217,14 @@ export function CircuitCanvas() {
   // Keyboard shortcuts for canvas
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  const target = e.target as HTMLElement;
+  const isTextEditor =
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target.isContentEditable ||
+    !!target.closest('.monaco-editor');
+
+  if (isTextEditor) return;
       if (e.key === 'r' || e.key === 'R') {
         if (selectedIds.length === 1) rotateComponent(selectedIds[0]);
       }
@@ -207,6 +233,10 @@ export function CircuitCanvas() {
           removeConnection(selectedConnectionId);
           setSelectedConnectionId(null);
         } else if (selectedIds.length > 0) removeComponents(selectedIds);
+        if (selectedEnvironmentId) {
+          removeEnvironmentObject(selectedEnvironmentId);
+          setSelectedEnvironmentId(null);
+        }
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
         e.preventDefault();
@@ -230,7 +260,7 @@ export function CircuitCanvas() {
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedIds, selectedConnectionId, rotateComponent, removeComponents, removeConnection, duplicateComponent, clearSelection]);
+  }, [selectedIds, selectedConnectionId, selectedEnvironmentId, rotateComponent, removeComponents, removeConnection, removeEnvironmentObject, duplicateComponent, clearSelection]);
 
   useEffect(() => {
     let clipboard: typeof components = [];
@@ -313,6 +343,7 @@ export function CircuitCanvas() {
             const fromState = simState?.components[conn.fromComponent]?.pins[conn.fromPin];
             const toState = simState?.components[conn.toComponent]?.pins[conn.toPin];
             const isActive = fromState?.digital === 'HIGH' || toState?.digital === 'HIGH';
+            const wire = classifyConnection(conn, components);
 
             const midX = (from.x + to.x) / 2;
             const path = `M ${from.x} ${from.y} L ${midX} ${from.y} L ${midX} ${to.y} L ${to.x} ${to.y}`;
@@ -322,11 +353,13 @@ export function CircuitCanvas() {
                 <path
                   d={path}
                   fill="none"
-                  stroke={selectedConnectionId === conn.id ? '#0a84ff' : isActive ? '#ffd60a' : '#48484a'}
-                  strokeWidth={isActive ? 2.5 : 2}
+                  stroke={selectedConnectionId === conn.id ? '#ffffff' : wire.color}
+                  strokeWidth={selectedConnectionId === conn.id || hoveredConnectionId === conn.id ? 3 : isActive ? 2.5 : 2}
                   className="transition-all"
-                  style={{ filter: isActive ? 'drop-shadow(0 0 4px rgba(255,214,10,0.5))' : 'none' }}
+                  style={{ filter: isActive ? `drop-shadow(0 0 4px ${wire.color})` : hoveredConnectionId === conn.id ? `drop-shadow(0 0 3px ${wire.color})` : 'none' }}
                 />
+                <circle cx={from.x} cy={from.y} r={3.5} fill={wire.color} stroke="#1a1a1e" strokeWidth={1} />
+                <circle cx={to.x} cy={to.y} r={3.5} fill={wire.color} stroke="#1a1a1e" strokeWidth={1} />
                 <path
                   d={path}
                   fill="none"
@@ -337,6 +370,8 @@ export function CircuitCanvas() {
                     e.stopPropagation();
                     setSelectedConnectionId(conn.id);
                   }}
+                  onMouseEnter={() => setHoveredConnectionId(conn.id)}
+                  onMouseLeave={() => setHoveredConnectionId(null)}
                 />
               </g>
             );
@@ -352,6 +387,25 @@ export function CircuitCanvas() {
               strokeDasharray="5,3"
             />
           )}
+
+          {environment.map((object) => (
+            <EnvironmentRenderer
+              key={object.id}
+              object={object}
+              selected={selectedEnvironmentId === object.id}
+              onClick={(event) => {
+                event.stopPropagation();
+                setSelectedEnvironmentId(object.id);
+                clearSelection();
+              }}
+              onMouseDown={(event) => {
+                event.stopPropagation();
+                const world = screenToWorld(event.clientX, event.clientY);
+                setSelectedEnvironmentId(object.id);
+                setDraggingEnvironment({ id: object.id, offsetX: world.x - object.x, offsetY: world.y - object.y });
+              }}
+            />
+          ))}
 
           {/* Components */}
           {components.map((comp) => (
@@ -376,6 +430,21 @@ export function CircuitCanvas() {
           Click a pin to connect, or press Esc to cancel
         </div>
       )}
+
+      {selectedConnectionId && (() => {
+        const connection = connections.find((item) => item.id === selectedConnectionId);
+        if (!connection) return null;
+        const wire = classifyConnection(connection, components) as ReturnType<typeof classifyConnection> & { fromName?: string; toName?: string };
+        return (
+          <div className="absolute top-4 right-4 w-56 px-3 py-2 bg-[#2a2a2e] border border-white/10 rounded-lg shadow-xl text-xs">
+            <div className="font-medium text-white mb-1">Wire</div>
+            <div className="text-gray-400">Type: <span style={{ color: wire.color }}>{wire.label}</span></div>
+            <div className="text-gray-500 mt-1 truncate">Net: {wire.net}</div>
+            <div className="text-gray-500 truncate">From: {wire.fromName}</div>
+            <div className="text-gray-500 truncate">To: {wire.toName}</div>
+          </div>
+        );
+      })()}
 
       {/* Zoom controls */}
       <div className="absolute bottom-4 right-4 flex flex-col gap-1 bg-[#2a2a2e] border border-white/10 rounded-lg p-1">
@@ -417,5 +486,15 @@ export function CircuitCanvas() {
         </div>
       )}
     </div>
+  );
+}
+
+function EnvironmentRenderer({ object, selected, onClick, onMouseDown }: { object: EnvironmentObject; selected: boolean; onClick: (event: React.MouseEvent) => void; onMouseDown: (event: React.MouseEvent) => void }) {
+  const fill = object.type === 'line-track' ? '#111113' : object.type === 'reflective-surface' ? '#c7d2fe' : object.type === 'light-source' ? '#ffd60a' : object.type === 'dark-area' ? '#09090b' : object.type === 'ground-platform' ? '#3a3a3c' : '#8b5e3c';
+  return (
+    <g transform={`translate(${object.x} ${object.y}) rotate(${object.rotation})`} onClick={onClick} onMouseDown={onMouseDown} className="cursor-pointer">
+      <rect x={-object.width / 2} y={-object.height / 2} width={object.width} height={object.height} rx={6} fill={fill} fillOpacity={0.8} stroke={selected ? '#0a84ff' : '#ffffff22'} strokeWidth={selected ? 2 : 1} />
+      <text textAnchor="middle" y={4} fill="#ffffffaa" style={{ fontSize: 9, pointerEvents: 'none' }}>{object.type.replace(/-/g, ' ')}</text>
+    </g>
   );
 }

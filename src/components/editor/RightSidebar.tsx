@@ -1,7 +1,10 @@
 import { useProjectStore } from '@/store/projectStore';
 import { useSimulationStore } from '@/store/simulationStore';
 import { COMPONENT_MAP } from '@/components/library';
-import { Sliders, Activity, AlertCircle, Info } from 'lucide-react';
+import Sliders from 'lucide-react/dist/esm/icons/sliders.js';
+import Activity from 'lucide-react/dist/esm/icons/activity.js';
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle.js';
+import Info from 'lucide-react/dist/esm/icons/info.js';
 import { useState, useEffect } from 'react';
 import { fetchVersions } from '@/services/persistence';
 import type { ProjectVersion } from '@/types';

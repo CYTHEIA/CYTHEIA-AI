@@ -1,5 +1,9 @@
 import { useUIStore } from '@/store/uiStore';
-import { Check, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
+import Check from 'lucide-react/dist/esm/icons/check.js';
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle.js';
+import Info from 'lucide-react/dist/esm/icons/info.js';
+import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle.js';
+import X from 'lucide-react/dist/esm/icons/x.js';
 
 export function Toasts() {
   const toasts = useUIStore((s) => s.toasts);

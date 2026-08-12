@@ -41,6 +41,30 @@ export interface Connection {
   path?: { x: number; y: number }[];
 }
 
+export type EnvironmentObjectType =
+  | 'obstacle'
+  | 'wall'
+  | 'box'
+  | 'moving-obstacle'
+  | 'target'
+  | 'light-source'
+  | 'dark-area'
+  | 'reflective-surface'
+  | 'line-track'
+  | 'distance-marker'
+  | 'ground-platform';
+
+export interface EnvironmentObject {
+  id: ID;
+  type: EnvironmentObjectType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  props: Record<string, any>;
+}
+
 export interface CodeFile {
   name: string;
   language: string;
@@ -50,6 +74,7 @@ export interface CodeFile {
 export interface ProjectData {
   components: PlacedComponent[];
   connections: Connection[];
+  environment?: EnvironmentObject[];
   code: CodeFile[];
   simulation: {
     running: boolean;

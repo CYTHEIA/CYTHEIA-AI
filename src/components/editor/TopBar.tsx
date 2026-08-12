@@ -1,7 +1,18 @@
-import {
-  Undo2, Redo2, Play, Pause, Square, Save, Share, Settings,
-  PanelLeft, PanelRight, PanelBottom, ChevronDown, Check, Loader, Circle,
-} from 'lucide-react';
+import Undo2 from 'lucide-react/dist/esm/icons/undo-2.js';
+import Redo2 from 'lucide-react/dist/esm/icons/redo-2.js';
+import Play from 'lucide-react/dist/esm/icons/play.js';
+import Pause from 'lucide-react/dist/esm/icons/pause.js';
+import Square from 'lucide-react/dist/esm/icons/square.js';
+import Save from 'lucide-react/dist/esm/icons/save.js';
+import Share from 'lucide-react/dist/esm/icons/share.js';
+import Settings from 'lucide-react/dist/esm/icons/settings.js';
+import PanelLeft from 'lucide-react/dist/esm/icons/panel-left.js';
+import PanelRight from 'lucide-react/dist/esm/icons/panel-right.js';
+import PanelBottom from 'lucide-react/dist/esm/icons/panel-bottom.js';
+import ChevronDown from 'lucide-react/dist/esm/icons/chevron-down.js';
+import Check from 'lucide-react/dist/esm/icons/check.js';
+import Loader from 'lucide-react/dist/esm/icons/loader.js';
+import Circle from 'lucide-react/dist/esm/icons/circle.js';
 import { useUIStore } from '@/store/uiStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSimulationStore } from '@/store/simulationStore';

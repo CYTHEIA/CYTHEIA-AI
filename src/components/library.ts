@@ -640,6 +640,19 @@ export const COMPONENT_MAP: Record<string, ComponentDefinition> = Object.fromEnt
   COMPONENT_LIBRARY.map((c) => [c.type, c])
 );
 
+export const ENVIRONMENT_LIBRARY = [
+  { type: 'obstacle', label: 'Obstacle', description: 'Solid obstacle for distance and proximity testing.' },
+  { type: 'wall', label: 'Wall', description: 'Barrier for robotics and sensor experiments.' },
+  { type: 'moving-obstacle', label: 'Moving Obstacle', description: 'Obstacle whose position can be changed during a test.' },
+  { type: 'target', label: 'Target', description: 'Target marker for robotics environments.' },
+  { type: 'line-track', label: 'Line / Track', description: 'Dark line surface for line sensor testing.' },
+  { type: 'reflective-surface', label: 'Reflective Surface', description: 'Surface that reflects IR light.' },
+  { type: 'light-source', label: 'Light Source', description: 'Environmental light source for LDR experiments.' },
+  { type: 'dark-area', label: 'Dark Area', description: 'Low-light area for LDR and line sensor experiments.' },
+  { type: 'distance-marker', label: 'Distance Marker', description: 'Reference marker for measuring sensor range.' },
+  { type: 'ground-platform', label: 'Ground / Platform', description: 'Platform for robot and obstacle layouts.' },
+] as const;
+
 export const CATEGORIES = [...new Set(COMPONENT_LIBRARY.map((c) => c.category))];
 
 export function searchComponents(query: string): ComponentDefinition[] {

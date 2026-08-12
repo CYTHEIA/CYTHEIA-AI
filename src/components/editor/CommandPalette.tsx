@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, CornerDownLeft } from 'lucide-react';
+import Search from 'lucide-react/dist/esm/icons/search.js';
+import CornerDownLeft from 'lucide-react/dist/esm/icons/corner-down-left.js';
 import { useUIStore } from '@/store/uiStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useSimulationStore } from '@/store/simulationStore';

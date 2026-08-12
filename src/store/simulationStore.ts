@@ -53,7 +53,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
 
     const project = useProjectStore.getState();
     const code = project.code[0]?.content || '';
-    engine.load(project.components, project.connections, code, get().speed);
+    engine.load(project.components, project.connections, code, get().speed, project.environment);
     const ok = engine.start();
     if (ok) {
       set({ running: true, paused: false, serialOutput: [] });

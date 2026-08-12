@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
-import {
-  Folder, Clock, Cpu, Layout, Star, History, Search, ChevronRight, CreditCard,
-} from 'lucide-react';
+import Folder from 'lucide-react/dist/esm/icons/folder.js';
+import Clock from 'lucide-react/dist/esm/icons/clock.js';
+import Cpu from 'lucide-react/dist/esm/icons/cpu.js';
+import Layout from 'lucide-react/dist/esm/icons/layout.js';
+import Star from 'lucide-react/dist/esm/icons/star.js';
+import History from 'lucide-react/dist/esm/icons/history.js';
+import Search from 'lucide-react/dist/esm/icons/search.js';
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js';
+import CreditCard from 'lucide-react/dist/esm/icons/credit-card.js';
 import { useUIStore } from '@/store/uiStore';
 import { useProjectStore } from '@/store/projectStore';
-import { COMPONENT_LIBRARY, CATEGORIES, searchComponents } from '@/components/library';
+import { COMPONENT_LIBRARY, ENVIRONMENT_LIBRARY, CATEGORIES, searchComponents } from '@/components/library';
 import { fetchProjects, fetchTemplates, fetchVersions, createProject } from '@/services/persistence';
 import type { Project, ProjectVersion } from '@/types';
 
@@ -137,6 +143,33 @@ function ComponentsTab() {
             </div>
           );
         })}
+        <div className="mt-4 pt-3 border-t border-white/5">
+          <div className="px-2 py-1.5 text-xs text-gray-500 font-medium uppercase tracking-wide">Obstacles &amp; Environment</div>
+          <div className="flex flex-col gap-0.5 mt-1">
+            {ENVIRONMENT_LIBRARY.filter((item) => {
+              const query = search.toLowerCase().trim();
+              return !query || item.label.toLowerCase().includes(query) || item.type.includes(query) || item.description.toLowerCase().includes(query);
+            }).map((item) => (
+              <div
+                key={item.type}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('environment-type', item.type);
+                  e.dataTransfer.effectAllowed = 'copy';
+                }}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white cursor-grab active:cursor-grabbing transition-all"
+              >
+                <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 bg-amber-500/10">
+                  <div className="w-4 h-4 rounded-sm bg-amber-400/70" />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate">{item.label}</div>
+                  <div className="text-xs text-gray-600 truncate">{item.description}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import type { PlacedComponent, Connection, ProjectData, CodeFile, ID, Project, ProjectVersion } from '@/types';
+import type { PlacedComponent, Connection, ProjectData, CodeFile, ID, Project, ProjectVersion, EnvironmentObject, EnvironmentObjectType } from '@/types';
 import { COMPONENT_MAP } from '@/components/library';
 import { uid } from '@/utils/uid';
 
 interface HistoryEntry {
   components: PlacedComponent[];
   connections: Connection[];
+  environment: EnvironmentObject[];
   code: CodeFile[];
   label: string;
   timestamp: number;
@@ -17,6 +18,7 @@ interface ProjectStore {
   projectDescription: string;
   components: PlacedComponent[];
   connections: Connection[];
+  environment: EnvironmentObject[];
   code: CodeFile[];
   selectedIds: ID[];
   saveStatus: 'saved' | 'saving' | 'unsaved';
@@ -44,6 +46,10 @@ interface ProjectStore {
 
   addConnection: (from: { component: ID; pin: string }, to: { component: ID; pin: string }) => void;
   removeConnection: (id: ID) => void;
+  addEnvironmentObject: (type: EnvironmentObjectType, x: number, y: number) => ID;
+  removeEnvironmentObject: (id: ID) => void;
+  moveEnvironmentObject: (id: ID, x: number, y: number) => void;
+  rotateEnvironmentObject: (id: ID) => void;
 
   selectComponent: (id: ID | null) => void;
   toggleSelect: (id: ID) => void;
@@ -99,6 +105,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   projectDescription: '',
   components: [],
   connections: [],
+  environment: [],
   code: defaultCode(),
   selectedIds: [],
   saveStatus: 'saved',
@@ -113,6 +120,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       projectDescription: '',
       components: [],
       connections: [],
+      environment: [],
       code: defaultCode(),
       selectedIds: [],
       saveStatus: 'saved',
@@ -129,6 +137,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       projectDescription: project.description || '',
       components: project.data.components || [],
       connections: project.data.connections || [],
+      environment: project.data.environment || [],
       code: project.data.code || defaultCode(),
       selectedIds: [],
       saveStatus: 'saved',
@@ -238,6 +247,37 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }));
   },
 
+  addEnvironmentObject: (type, x, y) => {
+    const id = uid();
+    const object: EnvironmentObject = {
+      id,
+      type,
+      x,
+      y,
+      width: type === 'wall' ? 180 : 80,
+      height: type === 'wall' ? 20 : 80,
+      rotation: 0,
+      props: { material: type === 'reflective-surface' ? 'reflective' : 'solid', label: type },
+    };
+    get().pushHistory('Add environment object');
+    set((s) => ({ environment: [...s.environment, object], saveStatus: 'unsaved' }));
+    return id;
+  },
+
+  removeEnvironmentObject: (id) => {
+    get().pushHistory('Remove environment object');
+    set((s) => ({ environment: s.environment.filter((object) => object.id !== id), saveStatus: 'unsaved' }));
+  },
+
+  moveEnvironmentObject: (id, x, y) => {
+    set((s) => ({ environment: s.environment.map((object) => object.id === id ? { ...object, x, y } : object), saveStatus: 'unsaved' }));
+  },
+
+  rotateEnvironmentObject: (id) => {
+    get().pushHistory('Rotate environment object');
+    set((s) => ({ environment: s.environment.map((object) => object.id === id ? { ...object, rotation: (object.rotation + 90) % 360 } : object), saveStatus: 'unsaved' }));
+  },
+
   selectComponent: (id) => set({ selectedIds: id ? [id] : [] }),
   toggleSelect: (id) =>
     set((s) => ({
@@ -260,9 +300,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   pushHistory: (label) => {
-    const { components, connections, code } = get();
+    const { components, connections, environment, code } = get();
     set((s) => ({
-      undoStack: [...s.undoStack.slice(-49), { components: [...components], connections: [...connections], code: [...code], label, timestamp: Date.now() }],
+      undoStack: [...s.undoStack.slice(-49), { components: [...components], connections: [...connections], environment: [...environment], code: [...code], label, timestamp: Date.now() }],
       redoStack: [],
     }));
   },
@@ -271,12 +311,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const { undoStack } = get();
     if (undoStack.length === 0) return;
     const entry = undoStack[undoStack.length - 1];
-    const { components, connections, code } = get();
+    const { components, connections, environment, code } = get();
     set((s) => ({
       undoStack: s.undoStack.slice(0, -1),
-      redoStack: [...s.redoStack, { components: [...components], connections: [...connections], code: [...code], label: entry.label, timestamp: Date.now() }],
+      redoStack: [...s.redoStack, { components: [...components], connections: [...connections], environment: [...environment], code: [...code], label: entry.label, timestamp: Date.now() }],
       components: entry.components,
       connections: entry.connections,
+      environment: entry.environment,
       code: entry.code,
       saveStatus: 'unsaved',
     }));
@@ -286,24 +327,25 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const { redoStack } = get();
     if (redoStack.length === 0) return;
     const entry = redoStack[redoStack.length - 1];
-    const { components, connections, code } = get();
+    const { components, connections, environment, code } = get();
     set((s) => ({
       redoStack: s.redoStack.slice(0, -1),
-      undoStack: [...s.undoStack, { components: [...components], connections: [...connections], code: [...code], label: entry.label, timestamp: Date.now() }],
+      undoStack: [...s.undoStack, { components: [...components], connections: [...connections], environment: [...environment], code: [...code], label: entry.label, timestamp: Date.now() }],
       components: entry.components,
       connections: entry.connections,
+      environment: entry.environment,
       code: entry.code,
       saveStatus: 'unsaved',
     }));
   },
 
   saveVersion: (name) => {
-    const { components, connections, code, versions } = get();
+    const { components, connections, environment, code, versions } = get();
     const version: ProjectVersion = {
       id: uid(),
       projectId: get().projectId || 'local',
       name,
-      data: { components, connections, code, simulation: { running: false, speed: 1 } },
+      data: { components, connections, environment, code, simulation: { running: false, speed: 1 } },
       createdAt: new Date().toISOString(),
     };
     set({ versions: [...versions, version] });
@@ -316,6 +358,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set({
       components: version.data.components,
       connections: version.data.connections,
+      environment: version.data.environment || [],
       code: version.data.code,
       saveStatus: 'unsaved',
     });
@@ -324,14 +367,15 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   setSaveStatus: (status) => set({ saveStatus: status }),
 
   getProjectData: () => {
-    const { components, connections, code } = get();
-    return { components, connections, code, simulation: { running: false, speed: 1 } };
+    const { components, connections, environment, code } = get();
+    return { components, connections, environment, code, simulation: { running: false, speed: 1 } };
   },
 
   setProjectData: (data) => {
     set({
       components: data.components || [],
       connections: data.connections || [],
+      environment: data.environment || [],
       code: data.code || defaultCode(),
       saveStatus: 'unsaved',
     });

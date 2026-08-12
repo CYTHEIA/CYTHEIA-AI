@@ -1,10 +1,11 @@
-import type { PlacedComponent, Connection, SimulationState, SimulationComponentState, SimulationPinState } from '@/types';
+import type { EnvironmentObject, PlacedComponent, Connection, SimulationState, SimulationComponentState, SimulationPinState } from '@/types';
 import { COMPONENT_MAP } from '@/components/library';
 import { resolveNetworkState } from './network';
 
 export interface InterpreterConfig {
   components: PlacedComponent[];
   connections: Connection[];
+  environment?: EnvironmentObject[];
   code: string;
   speed: number;
 }
@@ -18,6 +19,7 @@ export class ArduinoInterpreter {
   private code: string;
   private components: PlacedComponent[];
   private connections: Connection[];
+  private environment: EnvironmentObject[];
   private speed: number;
 
   // Arduino runtime state
@@ -50,6 +52,7 @@ export class ArduinoInterpreter {
     this.code = config.code;
     this.components = config.components;
     this.connections = config.connections;
+    this.environment = config.environment || [];
     this.speed = config.speed;
   }
 
@@ -136,6 +139,10 @@ export class ArduinoInterpreter {
       },
       delayMicroseconds: (us: number) => {
         self.delayRemaining = us / 1000;
+      },
+      pulseIn: (_pin: number, _state: number, timeout?: number): number => {
+        const distance = self.nearestObstacleDistance();
+        return distance > 400 ? timeout ?? 0 : Math.round(distance * 58);
       },
       millis: (): number => {
         return Date.now() - self.startTime;
@@ -259,6 +266,13 @@ export class ArduinoInterpreter {
     if (state.analog > 0) return state.analog;
 
     return 0;
+  }
+
+  private nearestObstacleDistance(): number {
+    const sensor = this.components.find((component) => component.type === 'ultrasonic-sensor' || component.type === 'ir-sensor');
+    const obstacles = this.environment.filter((object) => ['obstacle', 'wall', 'box', 'moving-obstacle', 'reflective-surface'].includes(object.type));
+    if (!sensor || obstacles.length === 0) return 400;
+    return Math.min(...obstacles.map((object) => Math.max(1, Math.hypot(object.x - sensor.x, object.y - sensor.y) / 4)));
   }
 
   start() {

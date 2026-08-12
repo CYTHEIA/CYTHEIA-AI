@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Clock, Trash2, Copy, Download, Upload, Cpu, ArrowLeft, Folder } from 'lucide-react';
+import Plus from 'lucide-react/dist/esm/icons/plus.js';
+import Search from 'lucide-react/dist/esm/icons/search.js';
+import Clock from 'lucide-react/dist/esm/icons/clock.js';
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2.js';
+import Copy from 'lucide-react/dist/esm/icons/copy.js';
+import Download from 'lucide-react/dist/esm/icons/download.js';
+import Upload from 'lucide-react/dist/esm/icons/upload.js';
+import Cpu from 'lucide-react/dist/esm/icons/cpu.js';
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left.js';
+import Folder from 'lucide-react/dist/esm/icons/folder.js';
 import { useUIStore } from '@/store/uiStore';
 import { useProjectStore } from '@/store/projectStore';
 import { fetchProjects, fetchTemplates, createProject, deleteProject, duplicateProject, ensureTemplates } from '@/services/persistence';
