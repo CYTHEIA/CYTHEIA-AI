@@ -79,6 +79,68 @@ const COMPONENT_LIBRARY = [
     defaultProps: {}
   },
   {
+    type: "arduino-mega",
+    label: "Arduino Mega 2560",
+    category: "Microcontrollers",
+    description: "Arduino Mega 2560 \u2014 ATmega2560 with 54 digital pins and 16 analog inputs. Ideal for large projects.",
+    width: 380,
+    height: 200,
+    keywords: ["arduino", "mega", "2560", "microcontroller", "mcu", "large", "board"],
+    pins: [
+      // Digital pins (top row)
+      { id: "d0", name: "D0", type: "serial", x: 25, y: 0, label: "RX" },
+      { id: "d1", name: "D1", type: "serial", x: 40, y: 0, label: "TX" },
+      { id: "d2", name: "D2", type: "digital", x: 55, y: 0 },
+      { id: "d3", name: "D3", type: "pwm", x: 70, y: 0 },
+      { id: "d4", name: "D4", type: "digital", x: 85, y: 0 },
+      { id: "d5", name: "D5", type: "pwm", x: 100, y: 0 },
+      { id: "d6", name: "D6", type: "pwm", x: 115, y: 0 },
+      { id: "d7", name: "D7", type: "digital", x: 130, y: 0 },
+      { id: "d8", name: "D8", type: "digital", x: 145, y: 0 },
+      { id: "d9", name: "D9", type: "pwm", x: 160, y: 0 },
+      { id: "d10", name: "D10", type: "pwm", x: 175, y: 0 },
+      { id: "d11", name: "D11", type: "pwm", x: 190, y: 0 },
+      { id: "d12", name: "D12", type: "digital", x: 205, y: 0 },
+      { id: "d13", name: "D13", type: "digital", x: 220, y: 0 },
+      { id: "d14", name: "D14", type: "digital", x: 235, y: 0 },
+      { id: "d15", name: "D15", type: "digital", x: 250, y: 0 },
+      { id: "d16", name: "D16", type: "digital", x: 265, y: 0 },
+      { id: "d17", name: "D17", type: "digital", x: 280, y: 0 },
+      { id: "d18", name: "D18", type: "serial", x: 295, y: 0, label: "TX1" },
+      { id: "d19", name: "D19", type: "serial", x: 310, y: 0, label: "RX1" },
+      { id: "d20", name: "D20", type: "serial", x: 325, y: 0, label: "SDA" },
+      { id: "d21", name: "D21", type: "serial", x: 340, y: 0, label: "SCL" },
+      { id: "gnd1", name: "GND", type: "ground", x: 355, y: 0 },
+      { id: "aref", name: "AREF", type: "analog", x: 370, y: 0 },
+      // Analog pins (bottom row)
+      { id: "a0", name: "A0", type: "analog", x: 25, y: 200 },
+      { id: "a1", name: "A1", type: "analog", x: 40, y: 200 },
+      { id: "a2", name: "A2", type: "analog", x: 55, y: 200 },
+      { id: "a3", name: "A3", type: "analog", x: 70, y: 200 },
+      { id: "a4", name: "A4", type: "analog", x: 85, y: 200 },
+      { id: "a5", name: "A5", type: "analog", x: 100, y: 200 },
+      { id: "a6", name: "A6", type: "analog", x: 115, y: 200 },
+      { id: "a7", name: "A7", type: "analog", x: 130, y: 200 },
+      { id: "a8", name: "A8", type: "analog", x: 145, y: 200 },
+      { id: "a9", name: "A9", type: "analog", x: 160, y: 200 },
+      { id: "a10", name: "A10", type: "analog", x: 175, y: 200 },
+      { id: "a11", name: "A11", type: "analog", x: 190, y: 200 },
+      { id: "a12", name: "A12", type: "analog", x: 205, y: 200 },
+      { id: "a13", name: "A13", type: "analog", x: 220, y: 200 },
+      { id: "a14", name: "A14", type: "analog", x: 235, y: 200 },
+      { id: "a15", name: "A15", type: "analog", x: 250, y: 200 },
+      // Power pins (bottom-right)
+      { id: "vin", name: "VIN", type: "power", x: 265, y: 200 },
+      { id: "gnd2", name: "GND", type: "ground", x: 280, y: 200 },
+      { id: "gnd3", name: "GND", type: "ground", x: 295, y: 200 },
+      { id: "5v", name: "5V", type: "power", x: 310, y: 200 },
+      { id: "3v3", name: "3.3V", type: "power", x: 325, y: 200 },
+      { id: "rst", name: "RST", type: "digital", x: 340, y: 200 },
+      { id: "gnd4", name: "GND", type: "ground", x: 355, y: 200 }
+    ],
+    defaultProps: {}
+  },
+  {
     type: "raspberry-pi-pico",
     label: "Raspberry Pi Pico",
     category: "Microcontrollers",
@@ -217,6 +279,108 @@ const COMPONENT_LIBRARY = [
       { id: "c", name: "Cathode", type: "generic", x: 80, y: 20 }
     ],
     defaultProps: { label: "1N4148" }
+  },
+  {
+    type: "npn-transistor",
+    label: "NPN Transistor",
+    category: "Semiconductors",
+    description: "NPN bipolar junction transistor \u2014 amplifies or switches electronic signals.",
+    width: 70,
+    height: 70,
+    keywords: ["npn", "transistor", "bjt", "amplifier", "switch", "semiconductor"],
+    pins: [
+      { id: "c", name: "Collector", type: "generic", x: 0, y: 20, label: "C" },
+      { id: "b", name: "Base", type: "generic", x: 35, y: 0, label: "B" },
+      { id: "e", name: "Emitter", type: "generic", x: 70, y: 20, label: "E" }
+    ],
+    defaultProps: { label: "2N2222" }
+  },
+  {
+    type: "pnp-transistor",
+    label: "PNP Transistor",
+    category: "Semiconductors",
+    description: "PNP bipolar junction transistor \u2014 amplifies or switches electronic signals.",
+    width: 70,
+    height: 70,
+    keywords: ["pnp", "transistor", "bjt", "amplifier", "switch", "semiconductor"],
+    pins: [
+      { id: "c", name: "Collector", type: "generic", x: 0, y: 50, label: "C" },
+      { id: "b", name: "Base", type: "generic", x: 35, y: 70, label: "B" },
+      { id: "e", name: "Emitter", type: "generic", x: 70, y: 50, label: "E" }
+    ],
+    defaultProps: { label: "2N2907" }
+  },
+  {
+    type: "n-mosfet",
+    label: "N-Channel MOSFET",
+    category: "Semiconductors",
+    description: "N-channel MOSFET \u2014 voltage-controlled switch for high-power loads.",
+    width: 80,
+    height: 70,
+    keywords: ["mosfet", "n-channel", "fet", "power", "switch", "semiconductor"],
+    pins: [
+      { id: "g", name: "Gate", type: "generic", x: 0, y: 20, label: "G" },
+      { id: "d", name: "Drain", type: "generic", x: 40, y: 0, label: "D" },
+      { id: "s", name: "Source", type: "generic", x: 80, y: 20, label: "S" }
+    ],
+    defaultProps: { label: "IRF540N" }
+  },
+  {
+    type: "p-mosfet",
+    label: "P-Channel MOSFET",
+    category: "Semiconductors",
+    description: "P-channel MOSFET \u2014 voltage-controlled switch for high-side switching.",
+    width: 80,
+    height: 70,
+    keywords: ["mosfet", "p-channel", "fet", "power", "switch", "semiconductor"],
+    pins: [
+      { id: "g", name: "Gate", type: "generic", x: 0, y: 50, label: "G" },
+      { id: "d", name: "Drain", type: "generic", x: 40, y: 70, label: "D" },
+      { id: "s", name: "Source", type: "generic", x: 80, y: 50, label: "S" }
+    ],
+    defaultProps: { label: "IRF9540" }
+  },
+  {
+    type: "photodiode",
+    label: "Photodiode",
+    category: "Semiconductors",
+    description: "Photodiode \u2014 converts light into electrical current.",
+    width: 70,
+    height: 70,
+    keywords: ["photodiode", "light", "optical", "sensor", "semiconductor"],
+    pins: [
+      { id: "a", name: "Anode", type: "generic", x: 0, y: 35 },
+      { id: "c", name: "Cathode", type: "generic", x: 70, y: 35 }
+    ],
+    defaultProps: { label: "Photodiode" }
+  },
+  {
+    type: "inductor",
+    label: "Inductor",
+    category: "Basic",
+    description: "Inductor \u2014 stores energy in a magnetic field. Default 10mH.",
+    width: 80,
+    height: 40,
+    keywords: ["inductor", "inductance", "coil", "choke", "magnetic"],
+    pins: [
+      { id: "a", name: "A", type: "generic", x: 0, y: 20 },
+      { id: "b", name: "B", type: "generic", x: 80, y: 20 }
+    ],
+    defaultProps: { inductance: 10, label: "10mH" }
+  },
+  {
+    type: "fuse",
+    label: "Fuse",
+    category: "Basic",
+    description: "Fuse \u2014 overcurrent protection device. Opens circuit when current exceeds rating.",
+    width: 80,
+    height: 40,
+    keywords: ["fuse", "protection", "overcurrent", "safety"],
+    pins: [
+      { id: "a", name: "A", type: "generic", x: 0, y: 20 },
+      { id: "b", name: "B", type: "generic", x: 80, y: 20 }
+    ],
+    defaultProps: { current: 500, label: "500mA" }
   },
   {
     type: "push-button",
@@ -473,6 +637,36 @@ const COMPONENT_LIBRARY = [
     defaultProps: { detected: false, label: "IR" }
   },
   {
+    type: "dht11",
+    label: "DHT11",
+    category: "Sensors",
+    description: "DHT11 temperature and humidity sensor \u2014 basic digital sensor.",
+    width: 70,
+    height: 70,
+    keywords: ["dht11", "temperature", "humidity", "sensor", "digital"],
+    pins: [
+      { id: "vcc", name: "VCC", type: "power", x: 0, y: 20 },
+      { id: "out", name: "OUT", type: "digital", x: 0, y: 40 },
+      { id: "gnd", name: "GND", type: "ground", x: 0, y: 60 }
+    ],
+    defaultProps: { temperature: 25, humidity: 50, label: "DHT11" }
+  },
+  {
+    type: "dht22",
+    label: "DHT22",
+    category: "Sensors",
+    description: "DHT22 temperature and humidity sensor \u2014 higher precision digital sensor.",
+    width: 70,
+    height: 70,
+    keywords: ["dht22", "temperature", "humidity", "sensor", "digital", "am2302"],
+    pins: [
+      { id: "vcc", name: "VCC", type: "power", x: 0, y: 20 },
+      { id: "out", name: "OUT", type: "digital", x: 0, y: 40 },
+      { id: "gnd", name: "GND", type: "ground", x: 0, y: 60 }
+    ],
+    defaultProps: { temperature: 25, humidity: 50, label: "DHT22" }
+  },
+  {
     type: "battery",
     label: "Battery 9V",
     category: "Power",
@@ -526,6 +720,33 @@ const COMPONENT_LIBRARY = [
       { id: "g", name: "GND", type: "ground", x: 25, y: 0 }
     ],
     defaultProps: { label: "GND" }
+  },
+  {
+    type: "vcc",
+    label: "VCC",
+    category: "Power",
+    description: "VCC rail \u2014 positive supply symbol (5V) for powering components.",
+    width: 50,
+    height: 40,
+    keywords: ["vcc", "power", "positive", "rail", "supply", "5v"],
+    pins: [
+      { id: "+", name: "+", type: "power", x: 25, y: 40 }
+    ],
+    defaultProps: { label: "VCC" }
+  },
+  {
+    type: "dc-supply",
+    label: "DC Supply",
+    category: "Power",
+    description: "Adjustable DC power supply \u2014 configurable voltage output.",
+    width: 100,
+    height: 60,
+    keywords: ["dc", "supply", "power", "adjustable", "bench"],
+    pins: [
+      { id: "+", name: "+", type: "power", x: 0, y: 30 },
+      { id: "-", name: "-", type: "ground", x: 100, y: 30 }
+    ],
+    defaultProps: { voltage: 12, label: "12V" }
   },
   {
     type: "and-gate",

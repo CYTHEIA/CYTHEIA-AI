@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --ct-bg: #0a0a0c;
+  --ct-bg-elevated: #0f0f12;
+  --ct-surface: #141417;
+  --ct-surface-2: #1a1a1e;
+  --ct-surface-3: #1f1f24;
+  --ct-border: rgba(255, 255, 255, 0.07);
+  --ct-border-strong: rgba(255, 255, 255, 0.12);
+  --ct-border-faint: rgba(255, 255, 255, 0.045);
+  --ct-accent: #0a84ff;
+  --ct-accent-hover: #3a9bff;
+  --ct-accent-dim: rgba(10, 132, 255, 0.13);
+  --ct-accent-border: rgba(10, 132, 255, 0.4);
+  --ct-text: #f5f5f7;
+  --ct-text-dim: #9a9aa2;
+  --ct-text-faint: #6d6d75;
+  --ct-ok: #30d158;
+  --ct-warn: #ffd60a;
+  --ct-danger: #ff453a;
+  --ct-danger-dim: rgba(255, 69, 58, 0.12);
+  --ct-radius: 8px;
+  --ct-radius-sm: 6px;
+  --ct-space-1: 4px;
+  --ct-space-2: 8px;
+  --ct-space-3: 12px;
+  --ct-space-4: 16px;
+  --ct-space-5: 20px;
+  --ct-space-6: 24px;
+  --ct-space-8: 32px;
+  --ct-font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+  --ct-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+}
+
 @layer base {
   * {
     -webkit-font-smoothing: antialiased;
@@ -15,9 +48,9 @@
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
-    background: #0a0a0c;
-    color: #fff;
+    font-family: var(--ct-font);
+    background: var(--ct-bg);
+    color: var(--ct-text);
   }
 
   ::-webkit-scrollbar {
@@ -36,6 +69,308 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+@layer components {
+  /* ---------- Design system: buttons ---------- */
+  .ct-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: var(--ct-radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+    user-select: none;
+  }
+  .ct-btn:focus-visible {
+    outline: 2px solid var(--ct-accent-border);
+    outline-offset: 1px;
+  }
+  .ct-btn svg {
+    flex-shrink: 0;
+  }
+
+  .ct-btn-primary {
+    background: var(--ct-accent);
+    color: #fff;
+  }
+  .ct-btn-primary:hover {
+    background: var(--ct-accent-hover);
+  }
+
+  .ct-btn-secondary {
+    background: var(--ct-surface-3);
+    border-color: var(--ct-border-strong);
+    color: var(--ct-text);
+  }
+  .ct-btn-secondary:hover {
+    background: #26262c;
+  }
+
+  .ct-btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--ct-text-dim);
+  }
+  .ct-btn-ghost:hover {
+    background: var(--ct-surface-3);
+    color: var(--ct-text);
+  }
+
+  .ct-btn-danger {
+    background: transparent;
+    color: var(--ct-danger);
+  }
+  .ct-btn-danger:hover {
+    background: var(--ct-danger-dim);
+  }
+
+  .ct-btn-sm {
+    height: 26px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .ct-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--ct-radius-sm);
+    color: var(--ct-text-dim);
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+  .ct-icon-btn:hover {
+    background: var(--ct-surface-3);
+    color: var(--ct-text);
+  }
+
+  /* ---------- Design system: inputs ---------- */
+  .ct-input {
+    width: 100%;
+    height: 32px;
+    padding: 0 10px;
+    background: var(--ct-surface);
+    border: 1px solid var(--ct-border-strong);
+    border-radius: var(--ct-radius-sm);
+    color: var(--ct-text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+  .ct-input::placeholder {
+    color: var(--ct-text-faint);
+  }
+  .ct-input:focus {
+    border-color: var(--ct-accent-border);
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.12);
+  }
+
+  .ct-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .ct-search .ct-search-icon {
+    position: absolute;
+    left: 10px;
+    color: var(--ct-text-faint);
+    pointer-events: none;
+  }
+  .ct-search .ct-input {
+    padding-left: 32px;
+  }
+
+  /* ---------- Design system: cards ---------- */
+  .ct-card {
+    background: var(--ct-surface);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    transition: border-color 120ms ease, background-color 120ms ease, transform 120ms ease;
+  }
+  .ct-card-hover:hover {
+    border-color: var(--ct-border-strong);
+    background: var(--ct-surface-2);
+  }
+
+  .ct-preview {
+    background: var(--ct-bg-elevated);
+    border-bottom: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius-sm) var(--ct-radius-sm) 0 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ---------- Design system: chips & badges ---------- */
+  .ct-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ct-text-dim);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--ct-border);
+    white-space: nowrap;
+  }
+  .ct-chip-accent {
+    color: var(--ct-accent-hover);
+    background: var(--ct-accent-dim);
+    border-color: var(--ct-accent-border);
+  }
+  .ct-chip-ok {
+    color: var(--ct-ok);
+    background: rgba(48, 209, 88, 0.1);
+    border-color: rgba(48, 209, 88, 0.28);
+  }
+  .ct-chip-warn {
+    color: var(--ct-warn);
+    background: rgba(255, 214, 10, 0.08);
+    border-color: rgba(255, 214, 10, 0.28);
+  }
+  .ct-chip-danger {
+    color: var(--ct-danger);
+    background: var(--ct-danger-dim);
+    border-color: rgba(255, 69, 58, 0.28);
+  }
+
+  .ct-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: var(--ct-radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--ct-surface-3);
+    border: 1px solid var(--ct-border);
+    color: var(--ct-text-dim);
+  }
+
+  /* ---------- Design system: labels & dividers ---------- */
+  .ct-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ct-text-faint);
+  }
+  .ct-divider {
+    height: 1px;
+    background: var(--ct-border);
+    border: 0;
+  }
+  .ct-mono {
+    font-family: var(--ct-mono);
+  }
+
+  /* ---------- Design system: tabs ---------- */
+  .ct-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ct-text-dim);
+    cursor: pointer;
+    transition: color 120ms ease;
+  }
+  .ct-tab:hover {
+    color: var(--ct-text);
+  }
+  .ct-tab-active {
+    color: var(--ct-text);
+  }
+  .ct-tab-active::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--ct-accent);
+  }
+
+  /* ---------- Design system: dropdown menu ---------- */
+  .ct-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    min-width: 168px;
+    padding: 4px;
+    background: var(--ct-surface-2);
+    border: 1px solid var(--ct-border-strong);
+    border-radius: var(--ct-radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    z-index: 40;
+  }
+  .ct-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: var(--ct-radius-sm);
+    font-size: 13px;
+    color: var(--ct-text-dim);
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 100ms ease, color 100ms ease;
+  }
+  .ct-menu-item:hover {
+    background: var(--ct-surface-3);
+    color: var(--ct-text);
+  }
+  .ct-menu-item-danger {
+    color: var(--ct-danger);
+  }
+  .ct-menu-item-danger:hover {
+    background: var(--ct-danger-dim);
+    color: var(--ct-danger);
+  }
+
+  /* ---------- Scrollbars ---------- */
+  .ct-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .ct-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+  }
+  .ct-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+  .ct-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* ---------- Preview svg ---------- */
+  .ct-preview-svg {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
   }
 }
 

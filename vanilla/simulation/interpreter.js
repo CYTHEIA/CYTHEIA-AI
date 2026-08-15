@@ -67,22 +67,55 @@ class ArduinoInterpreter {
     return result.join('\n');
   }
 
+  stripArduinoTypes(code) {
+    return code
+      .replace(/\b(int|float|double|long|byte|boolean|char|String)\s+(\w+)\s*\[\s*\]\s*=\s*\{([^}]*)\};/g, "var $2 = [$3];")
+      .replace(/\b(int|float|double|long|byte|boolean|char|String)\s+/g, "var ")
+      .replace(/\bunsigned\s+var\b/g, "var ")
+      .replace(/\bconst\s+var\b/g, "var ")
+      .replace(/\bvar\s+(?:int|float|double|long|byte|boolean|char|String)\b/g, "var ");
+  }
+
+  extractFunction(code, name) {
+    const idx = code.search(new RegExp(`\\bvoid\\s+${name}\\s*\\(`));
+    if (idx === -1) return null;
+    const open = code.indexOf("{", idx);
+    if (open === -1) return null;
+    let depth = 1;
+    let i = open + 1;
+    while (depth > 0 && i < code.length) {
+      if (code[i] === "{") depth++;
+      else if (code[i] === "}") depth--;
+      i++;
+    }
+    if (depth !== 0) return null;
+    return { start: idx, open, body: code.slice(open + 1, i - 1) };
+  }
+
+  buildPreamble(code, setupIndex) {
+    const head = code.slice(0, setupIndex);
+    return this.stripArduinoTypes(
+      head.replace(/\bServo\s+\w+;/g, "")
+    );
+  }
+
   compile() {
     const errors = [];
     try {
       const code = this.preprocess(this.code);
-      const setupMatch = code.match(/void\s+setup\s*\(\s*\)\s*\{([\s\S]*?)\n\}/);
-      const loopMatch = code.match(/void\s+loop\s*\(\s*\)\s*\{([\s\S]*?)\n\}/);
-      if (!setupMatch) {
+      const setup = this.extractFunction(code, "setup");
+      const loop = this.extractFunction(code, "loop");
+      if (!setup) {
         errors.push("Missing setup() function");
         return { success: false, errors };
       }
-      if (!loopMatch) {
+      if (!loop) {
         errors.push("Missing loop() function");
         return { success: false, errors };
       }
-      const setupBody = setupMatch[1];
-      const loopBody = loopMatch[1];
+      const preamble = this.buildPreamble(code, setup.start);
+      const setupBody = preamble + "\n" + this.stripArduinoTypes(setup.body);
+      const loopBody = preamble + "\n" + this.stripArduinoTypes(loop.body);
       const api = this.createRuntimeAPI();
 
       try {
@@ -148,7 +181,7 @@ class ArduinoInterpreter {
       }
     }
 
-    return {
+    const api = {
       pinMode: (pin, mode) => {
         self.pinModes.set(pin, mode);
       },
@@ -251,6 +284,13 @@ class ArduinoInterpreter {
         println: () => {}
       }
     };
+
+    const servoNames = [...this.code.matchAll(/\bServo\s+(\w+);/g)].map((m) => m[1]);
+    for (const name of servoNames) {
+      api[name] = new Servo();
+    }
+
+    return api;
   }
 
   readPinFromCircuit(pin) {
@@ -289,7 +329,7 @@ class ArduinoInterpreter {
   readAnalogFromCircuit(pin) {
     const arduino = this.components.find((c) => c.type.startsWith("arduino"));
     if (!arduino) return 0;
-    const pinId = `a${pin}`;
+    const pinId = pin >= 14 && pin <= 19 ? `a${pin - 14}` : `a${pin}`;
     const conns = this.connections.filter(
       (c) => c.fromComponent === arduino.id && c.fromPin === pinId || c.toComponent === arduino.id && c.toPin === pinId
     );
@@ -306,6 +346,14 @@ class ArduinoInterpreter {
       }
       if (otherComp.type === "light-sensor" && otherPinId === "out") {
         return Math.round((otherComp.props.light ?? 0.5) * 1023);
+      }
+      if (otherComp.type === "dht11" && otherPinId === "out") {
+        // DHT11 uses a digital protocol, return a simulated temperature reading
+        return Math.round((otherComp.props.temperature ?? 25) * 20.48);
+      }
+      if (otherComp.type === "dht22" && otherPinId === "out") {
+        // DHT22 uses a digital protocol, return a simulated temperature reading
+        return Math.round((otherComp.props.temperature ?? 25) * 20.48);
       }
     }
     return 0;

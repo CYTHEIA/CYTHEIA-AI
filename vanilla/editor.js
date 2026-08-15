@@ -22,7 +22,7 @@ export function renderEditor(container) {
   initEngine();
   container.innerHTML = "";
 
-  const root = createElement("div", "h-screen w-screen flex flex-col bg-[#0a0a0c] text-white overflow-hidden");
+  const root = createElement("div", "h-screen w-screen flex flex-col bg-[var(--ct-bg)] text-[var(--ct-text)] overflow-hidden");
 
   const topBar = createTopBar();
   root.appendChild(topBar);
@@ -34,9 +34,9 @@ export function renderEditor(container) {
   main.appendChild(leftSidebar);
   editorElements.leftSidebar = leftSidebar;
 
-  const center = createElement("div", "flex-1 flex flex-col overflow-hidden");
+  const center = createElement("div", "flex-1 flex flex-col overflow-hidden relative");
 
-  const canvasWrapper = createElement("div", "flex-1 overflow-hidden");
+  const canvasWrapper = createElement("div", "flex-1 overflow-hidden relative");
   const circuitCanvas = createCircuitCanvas();
   canvasWrapper.appendChild(circuitCanvas);
   center.appendChild(canvasWrapper);
@@ -103,10 +103,10 @@ function updateEditor() {
   const bottomVisible = state.ui.bottomPanelOpen;
 
   if (editorElements.leftSidebar) {
-    editorElements.leftSidebar.style.display = leftVisible ? 'block' : 'none';
+    editorElements.leftSidebar.style.display = leftVisible ? 'flex' : 'none';
   }
   if (editorElements.rightSidebar) {
-    editorElements.rightSidebar.style.display = rightVisible ? 'block' : 'none';
+    editorElements.rightSidebar.style.display = rightVisible ? 'flex' : 'none';
   }
   if (editorElements.bottomPanel) {
     editorElements.bottomPanel.style.display = bottomVisible ? 'flex' : 'none';

@@ -137,6 +137,36 @@ class SimulationEngine {
     return this.state;
   }
 
+  isPassive(type) {
+    return type === "resistor" || type === "capacitor" || type === "diode" || type === "inductor" || type === "fuse";
+  }
+
+  oppositePin(type, pinId) {
+    if (pinId === "a") return "b";
+    if (pinId === "b") return "a";
+    return pinId;
+  }
+
+  _resolveSource(compId, pinId, visited) {
+    const key = compId + ":" + pinId;
+    if (visited.has(key)) return null;
+    visited.add(key);
+    const arduino = this.components.find((c) => c.type.startsWith("arduino"));
+    const conn = this.connections.find(
+      (c) => c.fromComponent === compId && c.fromPin === pinId || c.toComponent === compId && c.toPin === pinId
+    );
+    if (!conn) return { kind: "self", compId, pinId };
+    const otherCompId = conn.fromComponent === compId ? conn.toComponent : conn.fromComponent;
+    const otherPinId = conn.fromComponent === compId ? conn.toPin : conn.fromPin;
+    const otherComp = this.components.find((c) => c.id === otherCompId);
+    if (!otherComp) return { kind: "self", compId, pinId };
+    if (otherCompId === arduino?.id) return { kind: "arduino", compId: otherCompId, pinId: otherPinId };
+    if (this.isPassive(otherComp.type)) {
+      return this._resolveSource(otherComp.id, this.oppositePin(otherComp.type, otherPinId), visited);
+    }
+    return { kind: "comp", compId: otherCompId, pinId: otherPinId, comp: otherComp };
+  }
+
   updateComponentStates() {
     const compStates = {};
     const arduino = this.components.find((c) => c.type.startsWith("arduino"));
@@ -150,86 +180,82 @@ class SimulationEngine {
         let analog = 0;
         let pwm = undefined;
 
-        const conn = this.connections.find(
-          (c) => c.fromComponent === comp.id && c.fromPin === pin.id || c.toComponent === comp.id && c.toPin === pin.id
-        );
+        const src = this._resolveSource(comp.id, pin.id, new Set());
 
-        if (conn && arduino) {
-          const otherCompId = conn.fromComponent === comp.id ? conn.toComponent : conn.fromComponent;
-          const otherPinId = conn.fromComponent === comp.id ? conn.toPin : conn.fromPin;
+        if (src?.kind === "arduino") {
+          const sPin = src.pinId;
+          const match = sPin.match(/^d(\d+)$/);
+          if (match) {
+            const pinNum = parseInt(match[1]);
+            const val = this.interpreter?.getPinValue(pinNum) ?? 0;
 
-          if (otherCompId === arduino.id) {
-            const match = otherPinId.match(/^d(\d+)$/);
-            if (match) {
-              const pinNum = parseInt(match[1]);
-              const val = this.interpreter?.getPinValue(pinNum) ?? 0;
-              const mode = this.interpreter?.getPinMode(pinNum);
-
-              if (mode === "OUTPUT" && val > 1) {
-                voltage = (val / 255) * 5;
-                digital = val > 0 ? "HIGH" : "LOW";
-                analog = Math.round((val / 255) * 1023);
-                pwm = { duty: val / 255, frequency: 490 };
-              } else {
-                voltage = val ? 5 : 0;
-                digital = val ? "HIGH" : "LOW";
-                analog = val * 1023;
-              }
+            if (val > 1) {
+              voltage = (val / 255) * 5;
+              digital = val > 0 ? "HIGH" : "LOW";
+              analog = Math.round((val / 255) * 1023);
+              pwm = { duty: val / 255, frequency: 490 };
+            } else {
+              voltage = val ? 5 : 0;
+              digital = val ? "HIGH" : "LOW";
+              analog = val * 1023;
             }
-            if (otherPinId === "5v") {
+          }
+          if (sPin === "5v") {
+            voltage = 5;
+            digital = "HIGH";
+            analog = 1023;
+          }
+          if (sPin === "3v3") {
+            voltage = 3.3;
+            digital = "HIGH";
+            analog = 674;
+          }
+          if (sPin.startsWith("gnd")) {
+            voltage = 0;
+            digital = "LOW";
+            analog = 0;
+          }
+        } else if (src?.kind === "comp") {
+          const c = src.comp;
+          if (c.type === "push-button") {
+            const pressed = c.props.pressed;
+            if (pin.type === "ground" || pin.id === "c" || pin.id === "-") {
+              voltage = 0;
+              digital = "LOW";
+            } else if (pressed) {
               voltage = 5;
               digital = "HIGH";
               analog = 1023;
             }
-            if (otherPinId === "3v3") {
-              voltage = 3.3;
+          }
+          if (c.type === "switch") {
+            if (c.props.closed) {
+              voltage = 5;
               digital = "HIGH";
-              analog = 674;
-            }
-            if (otherPinId.startsWith("gnd")) {
+              analog = 1023;
+            } else {
               voltage = 0;
               digital = "LOW";
-              analog = 0;
             }
-          } else {
-            const otherComp = this.components.find((c) => c.id === otherCompId);
-            if (otherComp) {
-              if (otherComp.type === "push-button") {
-                const pressed = otherComp.props.pressed;
-                if (pin.type === "ground" || pin.id === "c" || pin.id === "-") {
-                  voltage = 0;
-                  digital = "LOW";
-                } else if (pressed) {
-                  voltage = 5;
-                  digital = "HIGH";
-                  analog = 1023;
-                }
-              }
-              if (otherComp.type === "switch") {
-                if (otherComp.props.closed) {
-                  voltage = 5;
-                  digital = "HIGH";
-                  analog = 1023;
-                } else {
-                  voltage = 0;
-                  digital = "LOW";
-                }
-              }
-              if (otherComp.type === "power-5v" || (otherComp.type === "battery" && otherComp.props.voltage >= 4)) {
-                voltage = 5;
-                digital = "HIGH";
-                analog = 1023;
-              }
-              if (otherComp.type === "power-3v3") {
-                voltage = 3.3;
-                digital = "HIGH";
-                analog = 674;
-              }
-              if (otherComp.type === "gnd") {
-                voltage = 0;
-                digital = "LOW";
-              }
-            }
+          }
+          if (c.type === "power-5v" || c.type === "vcc" || (c.type === "battery" && (c.props.voltage ?? 0) >= 4)) {
+            voltage = 5;
+            digital = "HIGH";
+            analog = 1023;
+          }
+          if (c.type === "power-3v3") {
+            voltage = 3.3;
+            digital = "HIGH";
+            analog = 674;
+          }
+          if (c.type === "gnd") {
+            voltage = 0;
+            digital = "LOW";
+          }
+          if (c.type === "dc-supply") {
+            voltage = c.props.voltage || 12;
+            digital = "HIGH";
+            analog = 1023;
           }
         }
 
@@ -239,6 +265,10 @@ class SimulationEngine {
         }
         if (comp.type === "power-3v3" && pin.id === "+") {
           voltage = 3.3;
+          digital = "HIGH";
+        }
+        if (comp.type === "vcc" && pin.id === "+") {
+          voltage = 5;
           digital = "HIGH";
         }
         if (comp.type === "battery" && pin.id === "+") {
@@ -332,6 +362,40 @@ class SimulationEngine {
           }
         }
         visual.grid = grid;
+        break;
+      }
+      case "npn-transistor": {
+        const b = pins["b"];
+        const c = pins["c"];
+        const e = pins["e"];
+        visual.active = b?.digital === "HIGH" && (c?.digital === "HIGH" || e?.digital === "HIGH");
+        break;
+      }
+      case "pnp-transistor": {
+        const b = pins["b"];
+        const c = pins["c"];
+        const e = pins["e"];
+        visual.active = b?.digital === "LOW" && (c?.digital === "HIGH" || e?.digital === "HIGH");
+        break;
+      }
+      case "n-mosfet": {
+        const g = pins["g"];
+        visual.active = g?.digital === "HIGH";
+        break;
+      }
+      case "p-mosfet": {
+        const g = pins["g"];
+        visual.active = g?.digital === "LOW";
+        break;
+      }
+      case "photodiode": {
+        const a = pins["a"];
+        visual.active = a?.digital === "HIGH";
+        break;
+      }
+      case "dc-supply": {
+        const plus = pins["+"];
+        visual.active = plus?.digital === "HIGH";
         break;
       }
     }

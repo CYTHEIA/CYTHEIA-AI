@@ -136,6 +136,8 @@ function ComponentSVG({ type, component, simState }) {
       return /* @__PURE__ */ h(ArduinoUnoSVG, { simState });
     case "arduino-nano":
       return /* @__PURE__ */ h(ArduinoNanoSVG, { simState });
+    case "arduino-mega":
+      return /* @__PURE__ */ h(ArduinoMegaSVG, { simState });
     case "raspberry-pi-pico":
       return /* @__PURE__ */ h(PicoSVG, { simState });
     case "esp32":
@@ -150,6 +152,20 @@ function ComponentSVG({ type, component, simState }) {
       return /* @__PURE__ */ h(RgbLedSVG, { simState });
     case "diode":
       return /* @__PURE__ */ h(DiodeSVG, null);
+    case "npn-transistor":
+      return /* @__PURE__ */ h(NpnTransistorSVG, { simState });
+    case "pnp-transistor":
+      return /* @__PURE__ */ h(PnpTransistorSVG, { simState });
+    case "n-mosfet":
+      return /* @__PURE__ */ h(NMosfetSVG, { simState });
+    case "p-mosfet":
+      return /* @__PURE__ */ h(PMosfetSVG, { simState });
+    case "photodiode":
+      return /* @__PURE__ */ h(PhotodiodeSVG, { simState });
+    case "inductor":
+      return /* @__PURE__ */ h(InductorSVG, { component });
+    case "fuse":
+      return /* @__PURE__ */ h(FuseSVG, { component });
     case "push-button":
       return /* @__PURE__ */ h(PushButtonSVG, { component });
     case "switch":
@@ -190,6 +206,8 @@ function ComponentSVG({ type, component, simState }) {
       return /* @__PURE__ */ h(PowerSVG, { component, color: "#ff9f0a" });
     case "gnd":
       return /* @__PURE__ */ h(GndSVG, null);
+    case "vcc":
+      return /* @__PURE__ */ h(VccSVG, null);
     case "and-gate":
       return /* @__PURE__ */ h(GateSVG, { label: "AND", simState });
     case "or-gate":
@@ -217,6 +235,13 @@ function ArduinoUnoSVG({ simState }) {
 }
 function ArduinoNanoSVG() {
   return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("rect", { x: 0, y: 0, width: 160, height: 240, rx: 6, fill: "#2d7a4a", stroke: "#1a5c33", strokeWidth: 1.5 }), /* @__PURE__ */ h("rect", { x: 6, y: 6, width: 148, height: 228, rx: 3, fill: "#236b3d" }), /* @__PURE__ */ h("rect", { x: 60, y: 0, width: 40, height: 20, fill: "#c0c0c0", rx: 2 }), /* @__PURE__ */ h("rect", { x: 64, y: 4, width: 32, height: 12, fill: "#888" }), /* @__PURE__ */ h("rect", { x: 50, y: 100, width: 60, height: 40, rx: 2, fill: "#1a1a1a" }), /* @__PURE__ */ h("text", { x: 80, y: 125, textAnchor: "middle", fill: "#666", style: { fontSize: "6px" } }, "ATmega328P"), /* @__PURE__ */ h("text", { x: 80, y: 30, textAnchor: "middle", fill: "#fff", style: { fontSize: "6px", fontWeight: "bold" } }, "NANO"));
+}
+function ArduinoMegaSVG({ simState }) {
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("rect", { x: 0, y: 0, width: 380, height: 200, rx: 8, fill: "#2d7a4a", stroke: "#1a5c33", strokeWidth: 1.5 }), /* @__PURE__ */ h("rect", { x: 8, y: 8, width: 364, height: 184, rx: 4, fill: "#236b3d", stroke: "#1a5c33", strokeWidth: 1 }), /* @__PURE__ */ h("rect", { x: 330, y: 50, width: 50, height: 36, rx: 3, fill: "#c0c0c0", stroke: "#888", strokeWidth: 1 }), /* @__PURE__ */ h("rect", { x: 338, y: 56, width: 34, height: 24, rx: 1, fill: "#888" }), /* @__PURE__ */ h("rect", { x: 330, y: 100, width: 45, height: 30, rx: 3, fill: "#1a1a1a", stroke: "#333", strokeWidth: 1 }), /* @__PURE__ */ h("circle", { cx: 352, cy: 115, r: 8, fill: "#333" }), /* @__PURE__ */ h("rect", { x: 150, y: 60, width: 80, height: 80, rx: 2, fill: "#1a1a1a", stroke: "#000", strokeWidth: 1 }), /* @__PURE__ */ h("circle", { cx: 160, cy: 70, r: 2, fill: "#444" }), /* @__PURE__ */ h("text", { x: 190, y: 100, textAnchor: "middle", fill: "#666", style: { fontSize: "7px" } }, "ATmega2560"), /* @__PURE__ */ h("rect", { x: 24, y: -4, width: 332, height: 8, fill: "#c0c0c0", rx: 1 }), /* @__PURE__ */ h("rect", { x: 24, y: 196, width: 332, height: 8, fill: "#c0c0c0", rx: 1 }), /* @__PURE__ */ h("text", { x: 190, y: 35, textAnchor: "middle", fill: "#fff", style: { fontSize: "7px", fontWeight: "bold" } }, "ARDUINO MEGA 2560"), (() => {
+    const pin13 = simState?.pins["d13"];
+    const on = pin13?.digital === "HIGH";
+    return /* @__PURE__ */ h("circle", { cx: 300, cy: 160, r: 3, fill: on ? "#ffd60a" : "#3a3a3c", className: "transition-all" });
+  })());
 }
 function PicoSVG() {
   return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("rect", { x: 0, y: 0, width: 160, height: 200, rx: 6, fill: "#1d6fb8", stroke: "#0d4a87", strokeWidth: 1.5 }), /* @__PURE__ */ h("rect", { x: 6, y: 6, width: 148, height: 188, rx: 3, fill: "#155a96" }), /* @__PURE__ */ h("rect", { x: 60, y: 0, width: 40, height: 16, fill: "#c0c0c0", rx: 2 }), /* @__PURE__ */ h("rect", { x: 50, y: 80, width: 60, height: 40, rx: 2, fill: "#1a1a1a" }), /* @__PURE__ */ h("text", { x: 80, y: 105, textAnchor: "middle", fill: "#666", style: { fontSize: "6px" } }, "RP2040"), /* @__PURE__ */ h("text", { x: 80, y: 50, textAnchor: "middle", fill: "#fff", style: { fontSize: "6px", fontWeight: "bold" } }, "PICO"));
@@ -361,6 +386,53 @@ function PowerSVG({
 }
 function GndSVG() {
   return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("line", { x1: 25, y1: 0, x2: 25, y2: 15, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 10, y1: 15, x2: 40, y2: 15, stroke: "#86868b", strokeWidth: 3 }), /* @__PURE__ */ h("line", { x1: 14, y1: 22, x2: 36, y2: 22, stroke: "#86868b", strokeWidth: 2.5 }), /* @__PURE__ */ h("line", { x1: 18, y1: 29, x2: 32, y2: 29, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 22, y1: 36, x2: 28, y2: 36, stroke: "#86868b", strokeWidth: 1.5 }));
+}
+function VccSVG() {
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("line", { x1: 25, y1: 40, x2: 25, y2: 25, stroke: "#ff453a", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 10, y1: 25, x2: 40, y2: 25, stroke: "#ff453a", strokeWidth: 3 }), /* @__PURE__ */ h("line", { x1: 25, y1: 11, x2: 25, y2: 19, stroke: "#ff453a", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 21, y1: 15, x2: 29, y2: 15, stroke: "#ff453a", strokeWidth: 2 }));
+}
+function NpnTransistorSVG({ simState }) {
+  const c = simState?.pins["c"]?.digital === "HIGH";
+  const b = simState?.pins["b"]?.digital === "HIGH";
+  const e = simState?.pins["e"]?.digital === "HIGH";
+  const active = b && (c || e);
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("line", { x1: 0, y1: 20, x2: 10, y2: 20, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 60, y1: 20, x2: 70, y2: 20, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 35, y1: 10, x2: 35, y2: 0, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("circle", { cx: 35, cy: 35, r: 20, fill: "#3a3a3c", stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 35, y1: 15, x2: 35, y2: 55, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("polygon", { points: "25,35 35,25 45,35", fill: active ? "#0a84ff" : "#86868b", className: "transition-all" }), /* @__PURE__ */ h("line", { x1: 25, y1: 35, x2: 45, y2: 35, stroke: "#86868b", strokeWidth: 1 }), /* @__PURE__ */ h("text", { x: 10, y: 25, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "C"), /* @__PURE__ */ h("text", { x: 35, y: -5, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "B"), /* @__PURE__ */ h("text", { x: 60, y: 25, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "E"));
+}
+function PnpTransistorSVG({ simState }) {
+  const c = simState?.pins["c"]?.digital === "HIGH";
+  const b = simState?.pins["b"]?.digital === "HIGH";
+  const e = simState?.pins["e"]?.digital === "HIGH";
+  const active = b && (c || e);
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("line", { x1: 0, y1: 50, x2: 10, y2: 50, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 60, y1: 50, x2: 70, y2: 50, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 35, y1: 60, x2: 35, y2: 70, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("circle", { cx: 35, cy: 35, r: 20, fill: "#3a3a3c", stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 35, y1: 15, x2: 35, y2: 55, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("polygon", { points: "25,35 35,45 45,35", fill: active ? "#0a84ff" : "#86868b", className: "transition-all" }), /* @__PURE__ */ h("line", { x1: 25, y1: 35, x2: 45, y2: 35, stroke: "#86868b", strokeWidth: 1 }), /* @__PURE__ */ h("text", { x: 10, y: 55, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "C"), /* @__PURE__ */ h("text", { x: 35, y: 75, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "B"), /* @__PURE__ */ h("text", { x: 60, y: 55, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "E"));
+}
+function NMosfetSVG({ simState }) {
+  const g = simState?.pins["g"]?.digital === "HIGH";
+  const d = simState?.pins["d"]?.digital === "HIGH";
+  const s = simState?.pins["s"]?.digital === "HIGH";
+  const active = g && (d || s);
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("line", { x1: 0, y1: 20, x2: 10, y2: 20, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 40, y1: 0, x2: 40, y2: -10, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 70, y1: 20, x2: 80, y2: 20, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("rect", { x: 10, y: 0, width: 30, height: 40, rx: 2, fill: "#3a3a3c", stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 10, y1: 20, x2: 40, y2: 20, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("polygon", { points: "15,10 25,20 15,30", fill: active ? "#0a84ff" : "#86868b", className: "transition-all" }), /* @__PURE__ */ h("text", { x: 5, y: 25, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "G"), /* @__PURE__ */ h("text", { x: 40, y: -15, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "D"), /* @__PURE__ */ h("text", { x: 75, y: 25, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "S"));
+}
+function PMosfetSVG({ simState }) {
+  const g = simState?.pins["g"]?.digital === "HIGH";
+  const d = simState?.pins["d"]?.digital === "HIGH";
+  const s = simState?.pins["s"]?.digital === "HIGH";
+  const active = g && (d || s);
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("line", { x1: 0, y1: 50, x2: 10, y2: 50, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 40, y1: 70, x2: 40, y2: 80, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 70, y1: 50, x2: 80, y2: 50, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("rect", { x: 10, y: 30, width: 30, height: 40, rx: 2, fill: "#3a3a3c", stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 10, y1: 50, x2: 40, y2: 50, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("polygon", { points: "15,40 25,50 15,60", fill: active ? "#0a84ff" : "#86868b", className: "transition-all" }), /* @__PURE__ */ h("text", { x: 5, y: 55, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "G"), /* @__PURE__ */ h("text", { x: 40, y: 85, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "D"), /* @__PURE__ */ h("text", { x: 75, y: 55, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, "S"));
+}
+function PhotodiodeSVG({ simState }) {
+  const active = simState?.pins["a"]?.digital === "HIGH";
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("line", { x1: 0, y1: 35, x2: 15, y2: 35, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 55, y1: 35, x2: 70, y2: 35, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("polygon", { points: "15,20 55,20 55,50 15,50", fill: active ? "#0a84ff" : "#3a3a3c", stroke: "#86868b", strokeWidth: 2, className: "transition-all" }), /* @__PURE__ */ h("circle", { cx: 35, cy: 35, r: 8, fill: active ? "#30d158" : "#1a1a1a", stroke: "#86868b", strokeWidth: 1, className: "transition-all" }), /* @__PURE__ */ h("text", { x: 35, y: 5, textAnchor: "middle", fill: "#86868b", style: { fontSize: "7px" } }, "LIGHT"));
+}
+function InductorSVG({ component }) {
+  const label = component.props.label || "10mH";
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("line", { x1: 0, y1: 20, x2: 10, y2: 20, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 70, y1: 20, x2: 80, y2: 20, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("path", { d: "M 10,20 Q 17,10 24,20 Q 31,30 38,20 Q 45,10 52,20 Q 59,30 66,20", fill: "none", stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("text", { x: 40, y: 5, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, label));
+}
+function FuseSVG({ component }) {
+  const label = component.props.label || "500mA";
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("line", { x1: 0, y1: 20, x2: 15, y2: 20, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("line", { x1: 65, y1: 20, x2: 80, y2: 20, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("rect", { x: 15, y: 10, width: 50, height: 20, rx: 2, fill: "#3a3a3c", stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("rect", { x: 20, y: 10, width: 2, height: 20, fill: "#86868b" }), /* @__PURE__ */ h("rect", { x: 35, y: 10, width: 2, height: 20, fill: "#86868b" }), /* @__PURE__ */ h("rect", { x: 50, y: 10, width: 2, height: 20, fill: "#86868b" }), /* @__PURE__ */ h("line", { x1: 40, y1: 5, x2: 40, y2: 25, stroke: "#86868b", strokeWidth: 1 }), /* @__PURE__ */ h("text", { x: 40, y: 5, textAnchor: "middle", fill: "#86868b", style: { fontSize: "8px" } }, label));
+}
+function DcSupplySVG({ component }) {
+  const label = component.props.label || "12V";
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("rect", { x: 0, y: 0, width: 100, height: 60, rx: 4, fill: "#2a2a2e", stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("circle", { cx: 15, cy: 30, r: 8, fill: "#ff453a", stroke: "#fff", strokeWidth: 1 }), /* @__PURE__ */ h("circle", { cx: 85, cy: 30, r: 8, fill: "#3a3a3c", stroke: "#86868b", strokeWidth: 1 }), /* @__PURE__ */ h("line", { x1: 23, y1: 30, x2: 77, y2: 30, stroke: "#86868b", strokeWidth: 2 }), /* @__PURE__ */ h("text", { x: 50, y: 35, textAnchor: "middle", fill: "#fff", style: { fontSize: "10px", fontWeight: "bold" } }, label), /* @__PURE__ */ h("text", { x: 15, y: 35, textAnchor: "middle", fill: "#fff", style: { fontSize: "6px" } }, "+"), /* @__PURE__ */ h("text", { x: 85, y: 35, textAnchor: "middle", fill: "#86868b", style: { fontSize: "6px" } }, "\u2212"));
 }
 function GateSVG({ label, simState }) {
   const outState = simState?.pins["out"]?.digital === "HIGH";
