@@ -42,6 +42,7 @@ export const state = {
     zoom: 1,
     pan: { x: 0, y: 0 },
     commandPaletteOpen: false,
+    plansModalOpen: false,
     toasts: [],
     theme: "dark",
     draggingComponent: null,
@@ -105,6 +106,8 @@ export function setBottomPanelTab(tab) { update("ui", { bottomPanelTab: tab, bot
 export function toggleBottomPanel() { update("ui", { bottomPanelOpen: !state.ui.bottomPanelOpen }); }
 export function toggleCommandPalette() { update("ui", { commandPaletteOpen: !state.ui.commandPaletteOpen }); }
 export function setCommandPaletteOpen(open) { update("ui", { commandPaletteOpen: open }); }
+export function setPlansModalOpen(open) { update("ui", { plansModalOpen: open }); }
+export function togglePlansModal() { update("ui", { plansModalOpen: !state.ui.plansModalOpen }); }
 export function toggleGrid() { update("ui", { showGrid: !state.ui.showGrid }); }
 export function toggleSnap() { update("ui", { snapToGrid: !state.ui.snapToGrid }); }
 export function setZoom(zoom) { update("ui", { zoom: Math.max(0.2, Math.min(3, zoom)) }); }
@@ -386,4 +389,182 @@ export function setSimulationSpeed(speed) {
   state.simulation.engine?.setSpeed(speed);
   state.simulation.speed = speed;
   notify();
+}
+
+/* ---------------- SUBSCRIPTION / PLANS ---------------- */
+
+export const PLANS = {
+  basic: {
+    id: 'basic',
+    name: 'Basic',
+    price: 'FREE',
+    period: '',
+    description: 'For normal use and limited AI debugging.',
+    features: [
+      'Circuit editor',
+      'Circuit simulation',
+      'Standard projects',
+      'Limited AI debugging',
+      'Standard AI assistance'
+    ],
+    cta: 'Current Plan',
+    recommended: false,
+    ctaVariant: 'ghost'
+  },
+  premium: {
+    id: 'premium',
+    name: 'Premium',
+    price: '$15',
+    period: '/ month',
+    description: 'For users who want AI guidance while building circuits.',
+    features: [
+      'Everything in Basic',
+      'AI guidance for circuit building',
+      'Unlimited AI debugging',
+      'Advanced circuit assistance',
+      'AI code generation',
+      'Limited projects'
+    ],
+    cta: 'Upgrade to Premium',
+    recommended: true,
+    ctaVariant: 'primary'
+  },
+  postpaid: {
+    id: 'postpaid',
+    name: 'Postpaid',
+    price: 'Usage based',
+    period: '',
+    description: 'For heavy projects, prototypes and development.',
+    features: [
+      'Everything in Premium',
+      'Heavy project workloads',
+      'Prototype storage',
+      'Development workflows',
+      'Unlimited AI debugging',
+      'Best available AI models for assistance',
+      'AI code generation',
+      'Usage-based billing'
+    ],
+    cta: 'Use Postpaid',
+    recommended: false,
+    ctaVariant: 'secondary',
+    usageNote: 'Charged according to actual usage.'
+  }
+};
+
+export const DEFAULT_PLAN = 'basic';
+
+let subscriptionState = {
+  plan: DEFAULT_PLAN,
+  status: 'active',
+  billingProvider: null,
+  billingCustomerId: null,
+  billingSubscriptionId: null,
+  currentPeriodEnd: null,
+  cancelAtPeriodEnd: false,
+  usage: {
+    aiDebuggingRequests: 0,
+    aiCodeGenerations: 0,
+    projectsCreated: 0,
+    storageUsed: 0
+  }
+};
+
+function loadSubscriptionState() {
+  try {
+    const stored = localStorage.getItem('cytheia-subscription');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      subscriptionState = { ...subscriptionState, ...parsed };
+    }
+  } catch {}
+}
+
+function saveSubscriptionState() {
+  try {
+    localStorage.setItem('cytheia-subscription', JSON.stringify(subscriptionState));
+  } catch {}
+}
+
+loadSubscriptionState();
+
+export function getCurrentPlan() {
+  return PLANS[subscriptionState.plan] || PLANS.basic;
+}
+
+export function getPlanId() {
+  return subscriptionState.plan;
+}
+
+export function getSubscriptionState() {
+  return { ...subscriptionState };
+}
+
+export function getUsage() {
+  return { ...subscriptionState.usage };
+}
+
+export function setPlan(planId) {
+  if (!PLANS[planId]) return false;
+  subscriptionState.plan = planId;
+  subscriptionState.status = 'active';
+  saveSubscriptionState();
+  notify();
+  return true;
+}
+
+export function upgradeToPremium() {
+  return setPlan('premium');
+}
+
+export function selectPostpaid() {
+  return setPlan('postpaid');
+}
+
+export function downgradeToBasic() {
+  return setPlan('basic');
+}
+
+export function cancelSubscription() {
+  subscriptionState.status = 'canceled';
+  subscriptionState.cancelAtPeriodEnd = true;
+  saveSubscriptionState();
+  notify();
+}
+
+export function incrementUsage(key, amount = 1) {
+  if (subscriptionState.usage[key] !== undefined) {
+    subscriptionState.usage[key] += amount;
+    saveSubscriptionState();
+    notify();
+  }
+}
+
+export function resetUsage() {
+  subscriptionState.usage = {
+    aiDebuggingRequests: 0,
+    aiCodeGenerations: 0,
+    projectsCreated: 0,
+    storageUsed: 0
+  };
+  saveSubscriptionState();
+  notify();
+}
+
+export function isFeatureEnabled(feature) {
+  const plan = getCurrentPlan();
+  const basicFeatures = ['circuit-editor', 'circuit-simulation', 'standard-projects', 'limited-ai-debugging', 'standard-ai-assistance'];
+  const premiumFeatures = [...basicFeatures, 'ai-guidance', 'unlimited-ai-debugging', 'advanced-circuit-assistance', 'ai-code-generation', 'limited-projects'];
+  const postpaidFeatures = [...premiumFeatures, 'heavy-projects', 'prototype-storage', 'development-workflows', 'best-ai-models', 'usage-based-billing'];
+  
+  switch (plan.id) {
+    case 'basic':
+      return basicFeatures.includes(feature);
+    case 'premium':
+      return premiumFeatures.includes(feature);
+    case 'postpaid':
+      return postpaidFeatures.includes(feature);
+    default:
+      return basicFeatures.includes(feature);
+  }
 }

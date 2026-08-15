@@ -7,6 +7,7 @@ import {
   toggleRightSidebar,
   toggleBottomPanel,
   toggleCommandPalette,
+  togglePlansModal,
   setSaveStatus,
   getProjectData,
   startSimulation,
@@ -17,7 +18,8 @@ import {
   addToast,
   toggleGrid,
   toggleSnap,
-  setSimulationSpeed
+  setSimulationSpeed,
+  getCurrentPlan
 } from './store.js';
 import { updateProject, createProject } from './services/persistence.js';
 
@@ -163,13 +165,154 @@ export function createTopBar() {
   toggleBottomBtn.addEventListener('click', toggleBottomPanel);
   right.appendChild(toggleBottomBtn);
   
+  // Account / Plans menu
+  const accountMenu = createAccountMenu();
+  right.appendChild(accountMenu);
+  
   container.appendChild(right);
   
   container.updateUI = () => {
     const state = getState();
     projectNameSpan.textContent = state.project.projectName;
     saveStatusSpan.textContent = state.project.saveStatus === 'saved' ? '✓ Saved' : state.project.saveStatus === 'saving' ? '⟳ Saving...' : '● Unsaved';
+    
+    // Update account menu
+    if (accountMenu.updateUI) {
+      accountMenu.updateUI();
+    }
   };
+  
+  function createAccountMenu() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative';
+    
+    const trigger = document.createElement('button');
+    trigger.className = 'flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-gray-400 hover:text-white transition-colors';
+    
+    const currentPlan = getCurrentPlan();
+    const planBadge = document.createElement('span');
+    planBadge.className = 'ct-chip ct-chip-accent text-[10px]';
+    planBadge.textContent = currentPlan.name;
+    trigger.appendChild(planBadge);
+    
+    const chevron = document.createElement('span');
+    chevron.textContent = '▾';
+    chevron.className = 'text-[10px]';
+    trigger.appendChild(chevron);
+    
+    let menu = null;
+    
+    const closeMenu = () => {
+      if (menu) {
+        menu.remove();
+        menu = null;
+      }
+    };
+    
+    const openMenu = () => {
+      closeMenu();
+      
+      menu = document.createElement('div');
+      menu.className = 'ct-menu animate-in fade-in';
+      menu.style.minWidth = '200px';
+      
+      const planId = getCurrentPlan().id;
+      
+      const items = [
+        { 
+          label: 'Plans', 
+          icon: 'layers',
+          onClick: () => {
+            togglePlansModal();
+            closeMenu();
+          }
+        },
+        { type: 'divider' },
+        { 
+          label: planId === 'basic' ? 'Upgrade to Premium' : planId === 'premium' ? 'Switch to Postpaid' : 'Downgrade to Basic', 
+          icon: 'arrow-up',
+          onClick: () => {
+            if (planId === 'basic') {
+              import('./store.js').then(({ upgradeToPremium }) => { upgradeToPremium(); });
+            } else if (planId === 'premium') {
+              import('./store.js').then(({ selectPostpaid }) => { selectPostpaid(); });
+            } else {
+              import('./store.js').then(({ downgradeToBasic }) => { downgradeToBasic(); });
+            }
+            closeMenu();
+          }
+        },
+        { 
+          label: 'Usage', 
+          icon: 'bar-chart',
+          onClick: () => {
+            togglePlansModal();
+            closeMenu();
+          }
+        },
+        { type: 'divider' },
+        { 
+          label: 'Settings', 
+          icon: 'settings',
+          onClick: () => {
+            closeMenu();
+            // TODO: open settings
+          }
+        }
+      ];
+      
+      for (const item of items) {
+        if (item.type === 'divider') {
+          const divider = document.createElement('div');
+          divider.className = 'h-px bg-[var(--ct-border)] my-1';
+          menu.appendChild(divider);
+          continue;
+        }
+        
+        const btn = document.createElement('button');
+        btn.className = 'ct-menu-item';
+        btn.innerHTML = `<span>${item.label}</span>`;
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          item.onClick();
+        });
+        menu.appendChild(btn);
+      }
+      
+      wrapper.appendChild(menu);
+      
+      // Close on outside click
+      const closeHandler = (e) => {
+        if (!wrapper.contains(e.target)) {
+          closeMenu();
+          document.removeEventListener('mousedown', closeHandler);
+        }
+      };
+      setTimeout(() => document.addEventListener('mousedown', closeHandler), 0);
+    };
+    
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openMenu();
+    });
+    
+    wrapper.appendChild(trigger);
+    
+    wrapper.updateUI = () => {
+      const plan = getCurrentPlan();
+      planBadge.textContent = plan.name;
+      // Update trigger style based on plan
+      trigger.className = `flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition-colors ${
+        plan.id === 'basic' 
+          ? 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white' 
+          : plan.id === 'premium' 
+            ? 'bg-[var(--ct-accent)]/15 hover:bg-[var(--ct-accent)]/25 text-[var(--ct-accent)] border border-[var(--ct-accent)]/30' 
+            : 'bg-[var(--ct-warn)]/15 hover:bg-[var(--ct-warn)]/25 text-[var(--ct-warn)] border border-[var(--ct-warn)]/30'
+      }`;
+    };
+    
+    return wrapper;
+  }
   
   return container;
 }

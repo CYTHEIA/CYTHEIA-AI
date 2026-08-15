@@ -1,10 +1,12 @@
 import { 
   getState, 
   setCommandPaletteOpen, 
+  togglePlansModal,
   undo, 
   redo,
   setSaveStatus,
-  getProjectData
+  getProjectData,
+  getCurrentPlan
 } from './store.js';
 import { updateProject, createProject } from './services/persistence.js';
 
@@ -52,6 +54,17 @@ export function createCommandPalette() {
       }},
       { name: 'Undo', desc: 'Undo last action', action: () => { undo(); setCommandPaletteOpen(false); }},
       { name: 'Redo', desc: 'Redo last action', action: () => { redo(); setCommandPaletteOpen(false); }},
+      { type: 'divider' },
+      { name: 'Plans', desc: 'View and change subscription plan', action: () => { togglePlansModal(); setCommandPaletteOpen(false); }},
+      { name: 'Upgrade to Premium', desc: 'Upgrade to Premium plan', action: () => { 
+        import('./store.js').then(({ upgradeToPremium }) => { upgradeToPremium(); setCommandPaletteOpen(false); });
+      }},
+      { name: 'Switch to Postpaid', desc: 'Switch to usage-based Postpaid plan', action: () => { 
+        import('./store.js').then(({ selectPostpaid }) => { selectPostpaid(); setCommandPaletteOpen(false); });
+      }},
+      { name: 'Downgrade to Basic', desc: 'Downgrade to free Basic plan', action: () => { 
+        import('./store.js').then(({ downgradeToBasic }) => { downgradeToBasic(); setCommandPaletteOpen(false); });
+      }},
     ];
     
     const filtered = allCommands.filter(cmd => 

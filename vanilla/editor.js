@@ -5,7 +5,8 @@ import { createCircuitCanvas, renderCircuitCanvas } from "./circuitCanvas.js";
 import { createBottomPanel } from "./bottomPanel.js";
 import { createCommandPalette, renderCommandPalette } from "./commandPalette.js";
 import { createToasts, renderToasts } from "./toasts.js";
-import { getState, subscribe, initEngine } from "./store.js";
+import { createPlansModal } from "./plansModal.js";
+import { getState, subscribe, initEngine, setPlansModalOpen } from "./store.js";
 
 function createElement(tag, className = "") {
   const element = document.createElement(tag);
@@ -62,6 +63,10 @@ export function renderEditor(container) {
   root.appendChild(toasts);
   editorElements.toasts = toasts;
 
+  const plansModal = createPlansModal();
+  root.appendChild(plansModal.element);
+  editorElements.plansModal = plansModal;
+
   container.appendChild(root);
 
   if (!editorSubscribed) {
@@ -92,6 +97,14 @@ function updateEditor() {
 
   if (editorElements.toasts) {
     renderToasts(editorElements.toasts);
+  }
+
+  if (editorElements.plansModal) {
+    if (state.ui.plansModalOpen) {
+      editorElements.plansModal.open();
+    } else {
+      editorElements.plansModal.close();
+    }
   }
 
   if (editorElements.rightSidebar && editorElements.rightSidebar.updateContent) {
