@@ -44,8 +44,12 @@ export function createLeftSidebar() {
 
   function addAtCenter(type) {
     const state = getState();
-    const x = Math.round((600 - state.ui.pan.x) / state.ui.zoom / 20) * 20;
-    const y = Math.round((350 - state.ui.pan.y) / state.ui.zoom / 20) * 20;
+    const canvas = document.getElementById('circuit-canvas');
+    const rect = canvas?.getBoundingClientRect();
+    const cx = rect ? rect.width / 2 : 600;
+    const cy = rect ? rect.height / 2 : 350;
+    const x = Math.round((cx - state.ui.pan.x) / state.ui.zoom / 20) * 20;
+    const y = Math.round((cy - state.ui.pan.y) / state.ui.zoom / 20) * 20;
     addComponent(type, x, y);
   }
 
