@@ -1,12 +1,20 @@
 import './style.css';
-import { getState, subscribe, setView } from './store.js';
+import { getState, subscribe } from './store.js';
 import { renderApp } from './app.js';
 
-// Mount the application
 const root = document.getElementById('root');
-renderApp(root);
+let currentView = null;
 
-// Subscribe to state changes and re-render
-subscribe((state) => {
-  renderApp(root);
+function mount() {
+  const view = getState().ui.view;
+  if (view !== currentView) {
+    currentView = view;
+    renderApp(root);
+  }
+}
+
+mount();
+
+subscribe(() => {
+  mount();
 });

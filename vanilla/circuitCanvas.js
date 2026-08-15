@@ -21,8 +21,8 @@ const GRID = 20;
 function worldFromScreen(svg, clientX, clientY, state) {
   const rect = svg.getBoundingClientRect();
   return {
-    x: (clientX - rect.left) / state.ui.zoom - state.ui.pan.x / state.ui.zoom,
-    y: (clientY - rect.top) / state.ui.zoom - state.ui.pan.y / state.ui.zoom
+    x: (clientX - rect.left - state.ui.pan.x) / state.ui.zoom,
+    y: (clientY - rect.top - state.ui.pan.y) / state.ui.zoom
   };
 }
 
@@ -45,25 +45,25 @@ export function createCircuitCanvas() {
   container.svg = svg;
   container.appendChild(svg);
 
-  let drag = null;
-  let panDrag = null;
-  let wire = null;
-  let moved = false;
+  container._drag = null;
+  container._panDrag = null;
+  container._wirePending = null;
+  container._moved = false;
 
   const stopDrag = () => {
-    if (drag) {
-      pushHistory('Move component');
-      drag = null;
+    if (container._drag) {
+      if (container._moved) pushHistory('Move component');
+      container._drag = null;
     }
-    if (panDrag) panDrag = null;
+    if (container._panDrag) container._panDrag = null;
     svg.style.cursor = 'default';
   };
 
   svg.addEventListener('mousedown', (e) => {
-    if (e.button === 1 || e.button === 2 || e.shiftKey || e.spaceKey) {
+    if (e.button === 1 || e.button === 2 || e.shiftKey || e.code === 'Space') {
       e.preventDefault();
       const state = getState();
-      panDrag = { x: e.clientX, y: e.clientY, panX: state.ui.pan.x, panY: state.ui.pan.y };
+      container._panDrag = { x: e.clientX, y: e.clientY, panX: state.ui.pan.x, panY: state.ui.pan.y };
       svg.style.cursor = 'grabbing';
       return;
     }
@@ -71,29 +71,29 @@ export function createCircuitCanvas() {
 
   svg.addEventListener('mousemove', (e) => {
     const state = getState();
-    if (panDrag) {
+    if (container._panDrag) {
       setPan({
-        x: panDrag.panX + e.clientX - panDrag.x,
-        y: panDrag.panY + e.clientY - panDrag.y
+        x: container._panDrag.panX + e.clientX - container._panDrag.x,
+        y: container._panDrag.panY + e.clientY - container._panDrag.y
       });
       return;
     }
-    if (drag) {
+    if (container._drag) {
       const p = worldFromScreen(svg, e.clientX, e.clientY, state);
-      moveComponent(drag.id, snap(p.x - drag.offsetX), snap(p.y - drag.offsetY));
-      moved = true;
+      moveComponent(container._drag.id, snap(p.x - container._drag.offsetX), snap(p.y - container._drag.offsetY));
+      container._moved = true;
     }
-    if (wire) {
+    if (container._wirePending) {
       const p = worldFromScreen(svg, e.clientX, e.clientY, state);
-      wire.mouseX = p.x;
-      wire.mouseY = p.y;
+      container._wirePending.mouseX = p.x;
+      container._wirePending.mouseY = p.y;
       renderCircuitCanvas(container);
     }
   });
 
   svg.addEventListener('mouseup', stopDrag);
   svg.addEventListener('mouseleave', () => {
-    if (panDrag) panDrag = null;
+    if (container._panDrag) container._panDrag = null;
   });
 
   svg.addEventListener('wheel', (e) => {
@@ -117,7 +117,7 @@ export function createCircuitCanvas() {
   svg.addEventListener('click', (e) => {
     if (e.target === svg) {
       selectComponent(null);
-      wire = null;
+      container._wirePending = null;
       renderCircuitCanvas(container);
     }
   });
@@ -145,7 +145,7 @@ export function createCircuitCanvas() {
       rotateComponent(state.project.selectedIds[0]);
     }
     if (e.key === 'Escape') {
-      wire = null;
+      container._wirePending = null;
       selectComponent(null);
       renderCircuitCanvas(container);
     }
@@ -156,10 +156,10 @@ export function createCircuitCanvas() {
     beginComponentDrag(id, e) {
       const state = getState();
       const comp = state.project.components.find(c => c.id === id);
-      if (!comp || wire) return;
+      if (!comp || container._wirePending) return;
       const p = worldFromScreen(svg, e.clientX, e.clientY, state);
-      drag = { id, offsetX: p.x - comp.x, offsetY: p.y - comp.y };
-      moved = false;
+      container._drag = { id, offsetX: p.x - comp.x, offsetY: p.y - comp.y };
+      container._moved = false;
       selectComponent(id);
       container.focus();
     },
@@ -168,21 +168,21 @@ export function createCircuitCanvas() {
       const comp = state.project.components.find(c => c.id === componentId);
       if (!comp) return;
       const p = getPinWorldPosition(comp, pinId);
-      wire = { componentId, pinId, x: p.x, y: p.y, mouseX: p.x, mouseY: p.y };
+      container._wirePending = { componentId, pinId, x: p.x, y: p.y, mouseX: p.x, mouseY: p.y };
       e.stopPropagation();
       renderCircuitCanvas(container);
     },
     finishWire(componentId, pinId, e) {
-      if (!wire) return;
+      if (!container._wirePending) return;
       e.stopPropagation();
-      if (wire.componentId !== componentId || wire.pinId !== pinId) {
+      if (container._wirePending.componentId !== componentId || container._wirePending.pinId !== pinId) {
         addConnection(
-          { component: wire.componentId, pin: wire.pinId },
+          { component: container._wirePending.componentId, pin: container._wirePending.pinId },
           { component: componentId, pin: pinId }
         );
         addToast('Connection added', 'success');
       }
-      wire = null;
+      container._wirePending = null;
       renderCircuitCanvas(container);
     }
   };
@@ -253,7 +253,7 @@ export function renderCircuitCanvas(container) {
     const fromPin = fromDef?.pins.find(p => p.id === conn.fromPin);
     const toPin = toDef?.pins.find(p => p.id === conn.toPin);
     let color = '#62646b';
-    if ([fromPin, toPin].some(p => p?.type === 'ground' || p?.name?.toUpperCase().includes('GND'))) color = '#111';
+    if ([fromPin, toPin].some(p => p?.type === 'ground' || p?.name?.toUpperCase().includes('GND'))) color = '#666';
     else if ([fromPin, toPin].some(p => p?.type === 'power' || /VCC|5V|3V3|VIN/.test((p?.name || '').toUpperCase()))) color = '#ff453a';
     if (active) color = '#ffd60a';
     const midX = (from.x + to.x) / 2;
@@ -274,11 +274,6 @@ export function renderCircuitCanvas(container) {
     wires.appendChild(path);
   }
 
-  const interaction = container._interaction;
-  if (interaction?.wire) {
-    // reserved for future external wire state
-  }
-
   const components = document.createElementNS(SVG_NS, 'g');
   components.id = 'components';
   world.appendChild(components);
@@ -293,8 +288,13 @@ export function renderCircuitCanvas(container) {
       hoveredPin: null,
       showPinLabels: true,
       onPinClick: (pinId, e) => {
-        if (container._wirePending) container._interaction.finishWire(component.id, pinId, e);
-        else container._interaction.beginWire(component.id, pinId, e);
+        const interaction = container._interaction;
+        if (!interaction) return;
+        if (container._wirePending) {
+          interaction.finishWire(component.id, pinId, e);
+        } else {
+          interaction.beginWire(component.id, pinId, e);
+        }
       },
       onComponentClick: (e) => {
         e.stopPropagation();
@@ -319,7 +319,6 @@ export function renderCircuitCanvas(container) {
     components.appendChild(g);
   }
 
-  // Lightweight live wire layer. Pin click toggles pending mode.
   if (container._wirePending) {
     const p = container._wirePending;
     const path = document.createElementNS(SVG_NS, 'path');
@@ -330,37 +329,4 @@ export function renderCircuitCanvas(container) {
     path.setAttribute('stroke-dasharray', '7 5');
     world.appendChild(path);
   }
-
-  // Rebind pending-wire mouse tracking after every render.
-  if (container._wirePending && !container._wireTracking) {
-    container._wireTracking = true;
-    container.svg.addEventListener('mousemove', (e) => {
-      if (!container._wirePending) return;
-      const p = worldFromScreen(container.svg, e.clientX, e.clientY, getState());
-      container._wirePending.mouseX = p.x;
-      container._wirePending.mouseY = p.y;
-      renderCircuitCanvas(container);
-    });
-  }
-
-  // Expose a small hook used by pin handlers.
-  container._interaction.finishWire = (componentId, pinId, e) => {
-    const pending = container._wirePending;
-    if (!pending) return;
-    if (pending.componentId !== componentId || pending.pinId !== pinId) {
-      addConnection({ component: pending.componentId, pin: pending.pinId }, { component: componentId, pin: pinId });
-      addToast('Connection added', 'success');
-    }
-    container._wirePending = null;
-    renderCircuitCanvas(container);
-  };
-
-  container._interaction.beginWire = (componentId, pinId, e) => {
-    const comp = getState().project.components.find(c => c.id === componentId);
-    if (!comp) return;
-    const p = getPinWorldPosition(comp, pinId);
-    container._wirePending = { componentId, pinId, x: p.x, y: p.y, mouseX: p.x, mouseY: p.y };
-    e.stopPropagation();
-    renderCircuitCanvas(container);
-  };
 }

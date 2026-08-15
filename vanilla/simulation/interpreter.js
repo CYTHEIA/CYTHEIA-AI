@@ -3,41 +3,74 @@ class ArduinoInterpreter {
   components;
   connections;
   speed;
-  // Arduino runtime state
-  pinModes = /* @__PURE__ */ new Map();
-  pinValues = /* @__PURE__ */ new Map();
-  // digital: 0/1, analog: 0-1023, pwm: 0-255
+  pinModes = new Map();
+  pinValues = new Map();
   serialBuffer = [];
   serialBaud = 9600;
   serialInit = false;
   startTime = 0;
   loopCount = 0;
-  // Compiled functions
   setupFn = null;
   loopFn = null;
   loopGenerator = null;
-  // Running state
   running = false;
   paused = false;
-  nextDelay = 0;
   delayRemaining = 0;
-  // Callbacks
-  onSerialOutput = () => {
-  };
-  onPinChange = () => {
-  };
-  onError = () => {
-  };
+  servoAngles = new Map();
+  tonePins = new Set();
+  onSerialOutput = () => {};
+  onPinChange = () => {};
+  onError = () => {};
+
   constructor(config) {
     this.code = config.code;
     this.components = config.components;
     this.connections = config.connections;
     this.speed = config.speed;
   }
+
+  preprocess(code) {
+    let lines = code.split('\n');
+    let result = [];
+    let defines = new Map();
+
+    for (let line of lines) {
+      let trimmed = line.trim();
+
+      if (trimmed.startsWith('#include')) {
+        result.push('');
+        continue;
+      }
+
+      if (trimmed.startsWith('#define')) {
+        let match = trimmed.match(/^#define\s+(\w+)\s+(.+)$/);
+        if (match) {
+          defines.set(match[1], match[2]);
+        }
+        result.push('');
+        continue;
+      }
+
+      if (trimmed.startsWith('#')) {
+        result.push('');
+        continue;
+      }
+
+      let processed = line;
+      for (let [key, value] of defines) {
+        let regex = new RegExp(`\\b${key}\\b`, 'g');
+        processed = processed.replace(regex, value);
+      }
+      result.push(processed);
+    }
+
+    return result.join('\n');
+  }
+
   compile() {
     const errors = [];
     try {
-      const code = this.code;
+      const code = this.preprocess(this.code);
       const setupMatch = code.match(/void\s+setup\s*\(\s*\)\s*\{([\s\S]*?)\n\}/);
       const loopMatch = code.match(/void\s+loop\s*\(\s*\)\s*\{([\s\S]*?)\n\}/);
       if (!setupMatch) {
@@ -51,6 +84,7 @@ class ArduinoInterpreter {
       const setupBody = setupMatch[1];
       const loopBody = loopMatch[1];
       const api = this.createRuntimeAPI();
+
       try {
         this.setupFn = new Function(
           ...Object.keys(api),
@@ -59,9 +93,8 @@ class ArduinoInterpreter {
       } catch (e) {
         errors.push(`Setup error: ${e.message}`);
       }
+
       try {
-        // Compile loop() as a generator so delay() can suspend execution
-        // instead of executing the entire loop in one synchronous call.
         const generatorBody = loopBody
           .replace(/\bdelayMicroseconds\s*\(/g, "yield __delayMicroseconds(")
           .replace(/\bdelay\s*\(/g, "yield __delay(");
@@ -87,8 +120,34 @@ class ArduinoInterpreter {
       return { success: false, errors };
     }
   }
+
   createRuntimeAPI() {
     const self = this;
+
+    class Servo {
+      constructor() {
+        this._pin = null;
+        this._angle = 90;
+      }
+      attach(pin) {
+        this._pin = pin;
+      }
+      write(angle) {
+        this._angle = angle;
+        if (this._pin !== null) {
+          self.servoAngles.set(this._pin, angle);
+          self.pinValues.set(this._pin, Math.round(angle * 255 / 180));
+          self.onPinChange(this._pin, Math.round(angle * 255 / 180), "pwm");
+        }
+      }
+      read() {
+        return this._angle;
+      }
+      detach() {
+        this._pin = null;
+      }
+    }
+
     return {
       pinMode: (pin, mode) => {
         self.pinModes.set(pin, mode);
@@ -99,12 +158,10 @@ class ArduinoInterpreter {
         self.onPinChange(pin, val, "digital");
       },
       digitalRead: (pin) => {
-        const val = self.readPinFromCircuit(pin);
-        return val;
+        return self.readPinFromCircuit(pin);
       },
       analogRead: (pin) => {
-        const val = self.readAnalogFromCircuit(pin);
-        return val;
+        return self.readAnalogFromCircuit(pin);
       },
       analogWrite: (pin, value) => {
         self.pinValues.set(pin, value);
@@ -121,6 +178,16 @@ class ArduinoInterpreter {
       },
       micros: () => {
         return (Date.now() - self.startTime) * 1e3;
+      },
+      tone: (pin, frequency, duration) => {
+        self.tonePins.add(pin);
+        self.pinValues.set(pin, 1);
+        self.onPinChange(pin, 1, "digital");
+      },
+      noTone: (pin) => {
+        self.tonePins.delete(pin);
+        self.pinValues.set(pin, 0);
+        self.onPinChange(pin, 0, "digital");
       },
       Serial: {
         begin: (baud) => {
@@ -165,6 +232,7 @@ class ArduinoInterpreter {
       bitSet: (x, n) => x | 1 << n,
       bitClear: (x, n) => x & ~(1 << n),
       bit: (n) => 1 << n,
+      Servo,
       HIGH: 1,
       LOW: 0,
       INPUT: "INPUT",
@@ -178,15 +246,13 @@ class ArduinoInterpreter {
       A4: 18,
       A5: 19,
       Serial1: {
-        begin: () => {
-        },
-        print: () => {
-        },
-        println: () => {
-        }
+        begin: () => {},
+        print: () => {},
+        println: () => {}
       }
     };
   }
+
   readPinFromCircuit(pin) {
     const arduino = this.components.find((c) => c.type.startsWith("arduino"));
     if (!arduino) return 0;
@@ -219,6 +285,7 @@ class ArduinoInterpreter {
     if (mode === "INPUT_PULLUP") return 1;
     return 0;
   }
+
   readAnalogFromCircuit(pin) {
     const arduino = this.components.find((c) => c.type.startsWith("arduino"));
     if (!arduino) return 0;
@@ -243,6 +310,7 @@ class ArduinoInterpreter {
     }
     return 0;
   }
+
   start() {
     const result = this.compile();
     if (!result.success) {
@@ -262,6 +330,7 @@ class ArduinoInterpreter {
     }
     return true;
   }
+
   step(deltaMs) {
     if (!this.running || this.paused) return;
 
@@ -291,6 +360,7 @@ class ArduinoInterpreter {
       this.running = false;
     }
   }
+
   pause() {
     this.paused = true;
   }
@@ -304,6 +374,8 @@ class ArduinoInterpreter {
     this.loopGenerator = null;
     this.pinModes.clear();
     this.pinValues.clear();
+    this.servoAngles.clear();
+    this.tonePins.clear();
   }
   isRunning() {
     return this.running;
@@ -317,7 +389,9 @@ class ArduinoInterpreter {
   getPinMode(pin) {
     return this.pinModes.get(pin);
   }
+  getServoAngle(pin) {
+    return this.servoAngles.get(pin) ?? 90;
+  }
 }
-export {
-  ArduinoInterpreter
-};
+
+export { ArduinoInterpreter };

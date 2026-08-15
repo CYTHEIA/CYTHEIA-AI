@@ -16,11 +16,12 @@ function createElement(tag, className = "") {
 }
 
 let editorElements = {};
+let editorSubscribed = false;
 
 export function renderEditor(container) {
   initEngine();
   container.innerHTML = "";
-  
+
   const root = createElement("div", "h-screen w-screen flex flex-col bg-[#0a0a0c] text-white overflow-hidden");
 
   const topBar = createTopBar();
@@ -63,10 +64,12 @@ export function renderEditor(container) {
 
   container.appendChild(root);
 
-  // Subscribe to state changes
-  subscribe(() => {
-    updateEditor();
-  });
+  if (!editorSubscribed) {
+    editorSubscribed = true;
+    subscribe(() => {
+      updateEditor();
+    });
+  }
 
   updateEditor();
   return root;
@@ -74,32 +77,31 @@ export function renderEditor(container) {
 
 function updateEditor() {
   const state = getState();
-  
+
   if (editorElements.topBar && editorElements.topBar.updateUI) {
     renderTopBar(editorElements.topBar);
   }
-  
+
   if (editorElements.canvas) {
     renderCircuitCanvas(editorElements.canvas);
   }
-  
+
   if (editorElements.commandPalette) {
     renderCommandPalette(editorElements.commandPalette);
   }
-  
+
   if (editorElements.toasts) {
     renderToasts(editorElements.toasts);
   }
-  
+
   if (editorElements.rightSidebar && editorElements.rightSidebar.updateContent) {
     editorElements.rightSidebar.updateContent();
   }
-  
-  // Update sidebar visibility
+
   const leftVisible = state.ui.leftSidebarOpen;
   const rightVisible = state.ui.rightSidebarOpen;
   const bottomVisible = state.ui.bottomPanelOpen;
-  
+
   if (editorElements.leftSidebar) {
     editorElements.leftSidebar.style.display = leftVisible ? 'block' : 'none';
   }
@@ -107,6 +109,6 @@ function updateEditor() {
     editorElements.rightSidebar.style.display = rightVisible ? 'block' : 'none';
   }
   if (editorElements.bottomPanel) {
-    editorElements.bottomPanel.style.display = bottomVisible ? 'block' : 'none';
+    editorElements.bottomPanel.style.display = bottomVisible ? 'flex' : 'none';
   }
 }

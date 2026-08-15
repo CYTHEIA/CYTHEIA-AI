@@ -50,7 +50,7 @@ function createProjectCard(project, onOpen, onDelete, onDuplicate, onExport) {
   header.appendChild(menu);
   
   const desc = createElement('p', 'text-sm text-gray-400 mb-3', project.description || 'No description');
-  const meta = createElement('div', 'text-xs text-gray-500', `Updated ${new Date(project.updated_at).toLocaleDateString()}`);
+  const meta = createElement('div', 'text-xs text-gray-500', `Updated ${new Date(project.updatedAt || project.updated_at || Date.now()).toLocaleDateString()}`);
   
   card.appendChild(header);
   card.appendChild(desc);
@@ -169,7 +169,9 @@ export async function renderDashboard(container) {
               setView('editor');
               addToast(`Created "${proj.name}"`, 'success');
             } catch (e) {
-              addToast('Failed to create from template', 'error');
+              loadProject({ name: tmpl.name, description: tmpl.description || '', data: tmpl.data });
+              setView('editor');
+              addToast(`Loaded "${tmpl.name}" locally`, 'success');
             }
           }, 'w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded');
           

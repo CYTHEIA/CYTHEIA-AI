@@ -60,6 +60,9 @@ export function createBottomPanel() {
   content.className = 'flex-1 min-h-0 overflow-hidden';
   container.appendChild(content);
 
+  let textareaEl = null;
+  let lastCodeValue = null;
+
   function render() {
     styleTabs();
     const state = getState();
@@ -67,24 +70,40 @@ export function createBottomPanel() {
     if (state.ui.bottomPanelTab === 'serial') {
       const output = document.createElement('pre');
       output.className = 'm-0 w-full h-full overflow-auto bg-[#0f0f11] text-emerald-300 p-4 font-mono text-sm leading-6 whitespace-pre-wrap';
-      const lines = state.simulation.serialOutput || [];
-      output.textContent = lines.length ? lines.join('\n') : 'Serial monitor ready. Run the simulation to see Serial output.';
+      const entries = state.simulation.serialOutput || [];
+      let text = '';
+      if (entries.length > 0) {
+        text = entries.map(e => typeof e === 'string' ? e : (e?.text || '')).join('');
+      }
+      output.textContent = text || 'Serial monitor ready. Run the simulation to see Serial output.';
       content.appendChild(output);
       output.scrollTop = output.scrollHeight;
       return;
     }
 
-    const textarea = document.createElement('textarea');
-    textarea.className = 'w-full h-full bg-[#0f0f11] text-gray-200 p-4 outline-none resize-none font-mono text-sm leading-6 border-0';
-    textarea.spellcheck = false;
-    textarea.value = state.project.code[0]?.content || '';
-    textarea.addEventListener('input', () => updateCode(0, textarea.value));
-    content.appendChild(textarea);
+    textareaEl = document.createElement('textarea');
+    textareaEl.className = 'w-full h-full bg-[#0f0f11] text-gray-200 p-4 outline-none resize-none font-mono text-sm leading-6 border-0';
+    textareaEl.spellcheck = false;
+    const codeContent = state.project.code[0]?.content || '';
+    textareaEl.value = codeContent;
+    lastCodeValue = codeContent;
+    textareaEl.addEventListener('input', () => updateCode(0, textareaEl.value));
+    content.appendChild(textareaEl);
   }
 
   subscribe(() => {
-    if (getState().ui.bottomPanelTab === 'serial') render();
+    const state = getState();
+    if (state.ui.bottomPanelTab === 'serial') {
+      render();
+    } else if (textareaEl && document.activeElement !== textareaEl) {
+      const codeContent = state.project.code[0]?.content || '';
+      if (codeContent !== lastCodeValue) {
+        textareaEl.value = codeContent;
+        lastCodeValue = codeContent;
+      }
+    }
   });
+
   render();
   return container;
 }

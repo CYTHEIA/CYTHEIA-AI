@@ -1,6 +1,7 @@
 import { COMPONENT_MAP } from "../library.js";
 import { ArduinoInterpreter } from "./interpreter.js";
 import { uid } from "../utils_uid.js";
+
 class SimulationEngine {
   components;
   connections;
@@ -11,9 +12,8 @@ class SimulationEngine {
   speed = 1;
   lastTime = 0;
   motorAngle = 0;
-  servoAngle = 90;
-  onStateUpdate = () => {
-  };
+  onStateUpdate = () => {};
+
   constructor() {
     this.components = [];
     this.connections = [];
@@ -25,9 +25,11 @@ class SimulationEngine {
       arduinoPins: {}
     };
   }
+
   setOnStateUpdate(cb) {
     this.onStateUpdate = cb;
   }
+
   load(components, connections, code, speed) {
     this.components = components;
     this.connections = connections;
@@ -42,14 +44,23 @@ class SimulationEngine {
       this.onStateUpdate(this.state);
     };
     this.interpreter.onPinChange = (pin, value, mode) => {
-      this.state.arduinoPins[pin] = {
-        voltage: value ? 5 : 0,
-        digital: value ? "HIGH" : "LOW",
-        analog: value * 1023,
-        pwm: mode === "pwm" ? { duty: value / 255, frequency: 490 } : void 0
-      };
+      if (mode === "pwm") {
+        this.state.arduinoPins[pin] = {
+          voltage: (value / 255) * 5,
+          digital: value > 0 ? "HIGH" : "LOW",
+          analog: Math.round((value / 255) * 1023),
+          pwm: { duty: value / 255, frequency: 490 }
+        };
+      } else {
+        this.state.arduinoPins[pin] = {
+          voltage: value ? 5 : 0,
+          digital: value ? "HIGH" : "LOW",
+          analog: value * 1023
+        };
+      }
     };
   }
+
   start() {
     if (!this.interpreter) return false;
     this.state = {
@@ -72,15 +83,18 @@ class SimulationEngine {
     this.onStateUpdate(this.state);
     return true;
   }
+
   pause() {
     this.paused = true;
     if (this.interpreter) this.interpreter.pause();
   }
+
   resume() {
     this.paused = false;
     this.lastTime = Date.now();
     if (this.interpreter) this.interpreter.resume();
   }
+
   stop() {
     this.running = false;
     this.paused = false;
@@ -95,15 +109,19 @@ class SimulationEngine {
     this.updateComponentStates();
     this.onStateUpdate(this.state);
   }
+
   setSpeed(speed) {
     this.speed = speed;
   }
+
   isRunning() {
     return this.running;
   }
+
   isPaused() {
     return this.paused;
   }
+
   tick() {
     if (!this.running || this.paused || !this.interpreter) return;
     const now = Date.now();
@@ -114,9 +132,11 @@ class SimulationEngine {
     this.updateComponentStates();
     this.onStateUpdate(this.state);
   }
+
   getState() {
     return this.state;
   }
+
   updateComponentStates() {
     const compStates = {};
     const arduino = this.components.find((c) => c.type.startsWith("arduino"));
@@ -128,20 +148,33 @@ class SimulationEngine {
         let voltage = 0;
         let digital = "FLOATING";
         let analog = 0;
+        let pwm = undefined;
+
         const conn = this.connections.find(
           (c) => c.fromComponent === comp.id && c.fromPin === pin.id || c.toComponent === comp.id && c.toPin === pin.id
         );
+
         if (conn && arduino) {
           const otherCompId = conn.fromComponent === comp.id ? conn.toComponent : conn.fromComponent;
           const otherPinId = conn.fromComponent === comp.id ? conn.toPin : conn.fromPin;
+
           if (otherCompId === arduino.id) {
             const match = otherPinId.match(/^d(\d+)$/);
             if (match) {
               const pinNum = parseInt(match[1]);
               const val = this.interpreter?.getPinValue(pinNum) ?? 0;
-              voltage = val ? 5 : 0;
-              digital = val ? "HIGH" : "LOW";
-              analog = val * 1023;
+              const mode = this.interpreter?.getPinMode(pinNum);
+
+              if (mode === "OUTPUT" && val > 1) {
+                voltage = (val / 255) * 5;
+                digital = val > 0 ? "HIGH" : "LOW";
+                analog = Math.round((val / 255) * 1023);
+                pwm = { duty: val / 255, frequency: 490 };
+              } else {
+                voltage = val ? 5 : 0;
+                digital = val ? "HIGH" : "LOW";
+                analog = val * 1023;
+              }
             }
             if (otherPinId === "5v") {
               voltage = 5;
@@ -172,7 +205,17 @@ class SimulationEngine {
                   analog = 1023;
                 }
               }
-              if (otherComp.type === "power-5v" || otherComp.type === "battery" && otherComp.props.voltage >= 4) {
+              if (otherComp.type === "switch") {
+                if (otherComp.props.closed) {
+                  voltage = 5;
+                  digital = "HIGH";
+                  analog = 1023;
+                } else {
+                  voltage = 0;
+                  digital = "LOW";
+                }
+              }
+              if (otherComp.type === "power-5v" || (otherComp.type === "battery" && otherComp.props.voltage >= 4)) {
                 voltage = 5;
                 digital = "HIGH";
                 analog = 1023;
@@ -189,6 +232,7 @@ class SimulationEngine {
             }
           }
         }
+
         if (comp.type === "power-5v" && pin.id === "+") {
           voltage = 5;
           digital = "HIGH";
@@ -205,20 +249,33 @@ class SimulationEngine {
           voltage = 0;
           digital = "LOW";
         }
-        pins[pin.id] = { voltage, digital, analog };
+
+        pins[pin.id] = { voltage, digital, analog, pwm };
       }
+
       const visual = this.computeVisualState(comp, pins);
       compStates[comp.id] = { componentId: comp.id, pins, visual };
     }
     this.state.components = compStates;
   }
+
   computeVisualState(comp, pins) {
     const visual = {};
+
     switch (comp.type) {
       case "led": {
         const a = pins["a"];
         const c = pins["c"];
         visual.lit = a?.digital === "HIGH" && c?.digital === "LOW";
+        break;
+      }
+      case "rgb-led": {
+        const r = pins["r"];
+        const g = pins["g"];
+        const b = pins["b"];
+        visual.r = r?.digital === "HIGH";
+        visual.g = g?.digital === "HIGH";
+        visual.b = b?.digital === "HIGH";
         break;
       }
       case "dc-motor": {
@@ -229,14 +286,14 @@ class SimulationEngine {
           visual.running = true;
         } else {
           visual.running = false;
+          visual.angle = this.motorAngle;
         }
         break;
       }
       case "servo": {
         const sig = pins["sig"];
         if (sig?.pwm) {
-          this.servoAngle = sig.pwm.duty * 180;
-          visual.angle = this.servoAngle;
+          visual.angle = Math.round(sig.pwm.duty * 180);
         } else if (sig?.digital === "HIGH") {
           visual.angle = 180;
         } else {
@@ -244,18 +301,23 @@ class SimulationEngine {
         }
         break;
       }
+      case "buzzer": {
+        const plus = pins["+"];
+        visual.active = plus?.digital === "HIGH";
+        break;
+      }
       case "seven-segment": {
         const segMap = {
-          0: [1, 1, 1, 1, 1, 1, 0],
-          1: [0, 1, 1, 0, 0, 0, 0],
-          2: [1, 1, 0, 1, 1, 0, 1],
-          3: [1, 1, 1, 1, 0, 0, 1],
-          4: [0, 1, 1, 0, 0, 1, 1],
-          5: [1, 0, 1, 1, 0, 1, 1],
-          6: [1, 0, 1, 1, 1, 1, 1],
-          7: [1, 1, 1, 0, 0, 0, 0],
-          8: [1, 1, 1, 1, 1, 1, 1],
-          9: [1, 1, 1, 1, 0, 1, 1]
+          0: [true, true, true, true, true, true, false],
+          1: [false, true, true, false, false, false, false],
+          2: [true, true, false, true, true, false, true],
+          3: [true, true, true, true, false, false, true],
+          4: [false, true, true, false, false, true, true],
+          5: [true, false, true, true, false, true, true],
+          6: [true, false, true, true, true, true, true],
+          7: [true, true, true, false, false, false, false],
+          8: [true, true, true, true, true, true, true],
+          9: [true, true, true, true, false, true, true]
         };
         const val = comp.props.value || 0;
         visual.segments = segMap[val] || [false, false, false, false, false, false, false];
@@ -273,15 +335,17 @@ class SimulationEngine {
         break;
       }
     }
+
     return visual;
   }
+
   getErrors() {
     return this.state.errors;
   }
+
   clearErrors() {
     this.state.errors = [];
   }
 }
-export {
-  SimulationEngine
-};
+
+export { SimulationEngine };

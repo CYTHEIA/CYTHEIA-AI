@@ -1,45 +1,67 @@
-import { supabase } from "../lib/supabase.js";
+import { supabase, supabaseAvailable } from "../lib/supabase.js";
+
+function ensureClient() {
+  if (!supabaseAvailable || !supabase) {
+    throw new Error("Database is not configured. Running in local mode.");
+  }
+  return supabase;
+}
+
 async function fetchProjects() {
-  const { data, error } = await supabase.from("projects").select("*").eq("is_template", false).order("updated_at", { ascending: false });
+  const client = ensureClient();
+  const { data, error } = await client.from("projects").select("*").eq("is_template", false).order("updated_at", { ascending: false });
   if (error) throw error;
   return (data || []).map(mapDbProject);
 }
+
 async function fetchTemplates() {
-  const { data, error } = await supabase.from("projects").select("*").eq("is_template", true).order("created_at", { ascending: true });
+  const client = ensureClient();
+  const { data, error } = await client.from("projects").select("*").eq("is_template", true).order("created_at", { ascending: true });
   if (error) throw error;
   return (data || []).map(mapDbProject);
 }
+
 async function fetchProject(id) {
-  const { data, error } = await supabase.from("projects").select("*").eq("id", id).maybeSingle();
+  const client = ensureClient();
+  const { data, error } = await client.from("projects").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
   return data ? mapDbProject(data) : null;
 }
+
 async function createProject(name, description, data) {
-  const { data: row, error } = await supabase.from("projects").insert({ name, description, data, is_template: false }).select().single();
+  const client = ensureClient();
+  const { data: row, error } = await client.from("projects").insert({ name, description, data, is_template: false }).select().single();
   if (error) throw error;
   return mapDbProject(row);
 }
+
 async function updateProject(id, updates) {
-  const { error } = await supabase.from("projects").update({
+  const client = ensureClient();
+  const { error } = await client.from("projects").update({
     ...updates.name !== void 0 && { name: updates.name },
     ...updates.description !== void 0 && { description: updates.description },
     ...updates.data !== void 0 && { data: updates.data },
     ...updates.thumbnail !== void 0 && { thumbnail: updates.thumbnail },
-    updated_at: (/* @__PURE__ */ new Date()).toISOString()
+    updated_at: new Date().toISOString()
   }).eq("id", id);
   if (error) throw error;
 }
+
 async function deleteProject(id) {
-  const { error } = await supabase.from("projects").delete().eq("id", id);
+  const client = ensureClient();
+  const { error } = await client.from("projects").delete().eq("id", id);
   if (error) throw error;
 }
+
 async function duplicateProject(id) {
   const project = await fetchProject(id);
   if (!project) return null;
   return createProject(`${project.name} (Copy)`, project.description || "", project.data);
 }
+
 async function fetchVersions(projectId) {
-  const { data, error } = await supabase.from("project_versions").select("*").eq("project_id", projectId).order("created_at", { ascending: false });
+  const client = ensureClient();
+  const { data, error } = await client.from("project_versions").select("*").eq("project_id", projectId).order("created_at", { ascending: false });
   if (error) throw error;
   return (data || []).map((v) => ({
     id: v.id,
@@ -49,8 +71,10 @@ async function fetchVersions(projectId) {
     createdAt: v.created_at
   }));
 }
+
 async function createVersion(projectId, name, data) {
-  const { data: row, error } = await supabase.from("project_versions").insert({ project_id: projectId, name, data }).select().single();
+  const client = ensureClient();
+  const { data: row, error } = await client.from("project_versions").insert({ project_id: projectId, name, data }).select().single();
   if (error) throw error;
   return {
     id: row.id,
@@ -60,19 +84,26 @@ async function createVersion(projectId, name, data) {
     createdAt: row.created_at
   };
 }
+
 async function ensureTemplates() {
-  const existing = await fetchTemplates();
-  if (existing.length > 0) return;
-  const { TEMPLATES } = await import("../templates.js");
-  for (const tpl of TEMPLATES) {
-    await supabase.from("projects").insert({
-      name: tpl.name,
-      description: tpl.description,
-      data: tpl.data,
-      is_template: true
-    });
+  try {
+    const existing = await fetchTemplates();
+    if (existing.length > 0) return;
+    const { TEMPLATES } = await import("../templates.js");
+    const client = ensureClient();
+    for (const tpl of TEMPLATES) {
+      await client.from("projects").insert({
+        name: tpl.name,
+        description: tpl.description,
+        data: tpl.data,
+        is_template: true
+      });
+    }
+  } catch {
+    // Templates are optional; don't crash if DB unavailable
   }
 }
+
 function mapDbProject(row) {
   return {
     id: row.id,
@@ -85,6 +116,7 @@ function mapDbProject(row) {
     updatedAt: row.updated_at
   };
 }
+
 function exportProject(project) {
   return JSON.stringify(
     {
@@ -100,6 +132,7 @@ function exportProject(project) {
     2
   );
 }
+
 function importProject(json) {
   try {
     const parsed = JSON.parse(json);
@@ -113,6 +146,7 @@ function importProject(json) {
     return null;
   }
 }
+
 export {
   createProject,
   createVersion,
@@ -125,5 +159,6 @@ export {
   fetchTemplates,
   fetchVersions,
   importProject,
-  updateProject
+  updateProject,
+  supabaseAvailable
 };

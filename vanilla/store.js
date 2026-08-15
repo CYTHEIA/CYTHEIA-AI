@@ -154,8 +154,8 @@ export function newProject(name) {
 
 export function loadProject(project) {
   state.project = {
-    projectId: project.id,
-    projectName: project.name,
+    projectId: project.id || null,
+    projectName: project.name || "Untitled Project",
     projectDescription: project.description || "",
     components: project.data.components || [],
     connections: project.data.connections || [],
@@ -330,14 +330,21 @@ export function redo() {
 
 /* ---------------- SIMULATION ---------------- */
 
+let lastSerialLength = 0;
+
 export function initEngine() {
   if (state.simulation.engine) return;
   const engine = new SimulationEngine();
   engine.setOnStateUpdate((simulationState) => {
     state.simulation.state = simulationState;
-    if (simulationState.serialOutput.length > 0) {
-      const last = simulationState.serialOutput[simulationState.serialOutput.length - 1];
-      if (last) state.simulation.serialOutput = [...state.simulation.serialOutput.slice(-499), last];
+    const entries = simulationState.serialOutput || [];
+    if (entries.length > lastSerialLength) {
+      const newEntries = entries.slice(lastSerialLength);
+      for (const entry of newEntries) {
+        const text = typeof entry === 'string' ? entry : (entry?.text || '');
+        state.simulation.serialOutput = [...state.simulation.serialOutput.slice(-499), text];
+      }
+      lastSerialLength = entries.length;
     }
     notify();
   });
@@ -356,6 +363,7 @@ export function startSimulation() {
   state.simulation.running = true;
   state.simulation.paused = false;
   state.simulation.serialOutput = [];
+  lastSerialLength = 0;
   state.simulation.tickInterval = setInterval(() => state.simulation.engine?.tick(), 16);
   notify();
 }
@@ -370,6 +378,7 @@ export function stopSimulation() {
   state.simulation.paused = false;
   state.simulation.tickInterval = null;
   state.simulation.serialOutput = [];
+  lastSerialLength = 0;
   notify();
 }
 
