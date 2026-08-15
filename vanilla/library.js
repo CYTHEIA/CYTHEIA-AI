@@ -357,7 +357,7 @@ const COMPONENT_LIBRARY = [
       { id: "scl", name: "SCL", type: "digital", x: 0, y: 90 },
       { id: "sda", name: "SDA", type: "digital", x: 160, y: 90 }
     ],
-    defaultProps: { text: "Nextel AI", label: "OLED" }
+    defaultProps: { text: "CYTHEIA AI", label: "OLED" }
   },
   {
     type: "seven-segment",

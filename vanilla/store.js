@@ -7,13 +7,13 @@ function defaultCode() {
     {
       name: "main.ino",
       language: "cpp",
-      content: `// Nextel AI — Arduino Sketch
+      content: `// CYTHEIA AI — Arduino Sketch
 // LED Blink on Pin 13
 
 void setup() {
   pinMode(13, OUTPUT);
   Serial.begin(9600);
-  Serial.println("Nextel AI - Ready");
+  Serial.println("CYTHEIA AI - Ready");
 }
 
 void loop() {
@@ -426,6 +426,7 @@ export function redo() {
 /* ---------------- SIMULATION ---------------- */
 
 export function initEngine() {
+  if (state.simulation.engine) return;
   const engine = new SimulationEngine();
 
   engine.setOnStateUpdate((simulationState) => {

@@ -104,9 +104,7 @@ export function renderCircuitCanvas(container) {
     const y2 = toComp.y + toPin.y;
     
     // Determine wire color based on pin type
-    let wireColor = '#888888';
-    if (fromPin.type === 'ground' || fromPin.name.includes('GND')) wireColor = '#000000';
-    else if (fromPin.type === 'power' || fromPin.name.includes('VCC') || fromPin.name.includes('5V')) wireColor = '#ff0000';
+    let wireColor = "#888888"; const pins = [fromPin, toPin]; if (pins.some(p => p.type === "ground" || p.name?.includes("GND"))) wireColor = "#000000"; else if (pins.some(p => p.type === "power" || p.name?.includes("VCC") || p.name?.includes("5V"))) wireColor = "#ff0000";
     
     const line = document.createElementNS(SVG_NS, 'line');
     line.setAttribute('x1', x1);
@@ -136,6 +134,7 @@ export function renderCircuitCanvas(container) {
     g.style.cursor = 'move';
     g.setAttribute('data-component-id', component.id);
     
+    const sim = state.simulation?.state?.components?.[component.id];
     // Draw component background
     const rect = document.createElementNS(SVG_NS, 'rect');
     rect.setAttribute('x', -def.width / 2);
@@ -144,6 +143,7 @@ export function renderCircuitCanvas(container) {
     rect.setAttribute('height', def.height);
     rect.setAttribute('fill', '#1a2633');
     rect.setAttribute('stroke', isSelected ? '#0a84ff' : '#333333');
+    if (component.type === "led" && sim?.visual?.lit) { rect.setAttribute("fill", component.props?.color || "#ff3b30"); }
     rect.setAttribute('stroke-width', isSelected ? '2' : '1');
     rect.setAttribute('rx', '4');
     g.appendChild(rect);

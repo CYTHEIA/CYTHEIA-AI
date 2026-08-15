@@ -5,7 +5,7 @@ import { createCircuitCanvas, renderCircuitCanvas } from "./circuitCanvas.js";
 import { createBottomPanel } from "./bottomPanel.js";
 import { createCommandPalette, renderCommandPalette } from "./commandPalette.js";
 import { createToasts, renderToasts } from "./toasts.js";
-import { getState, subscribe } from "./store.js";
+import { getState, subscribe, initEngine } from "./store.js";
 
 function createElement(tag, className = "") {
   const element = document.createElement(tag);
@@ -18,6 +18,7 @@ function createElement(tag, className = "") {
 let editorElements = {};
 
 export function renderEditor(container) {
+  initEngine();
   container.innerHTML = "";
   
   const root = createElement("div", "h-screen w-screen flex flex-col bg-[#0a0a0c] text-white overflow-hidden");

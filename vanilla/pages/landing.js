@@ -104,7 +104,7 @@ export function renderLandingPage(container) {
   
   const logoSection = createElement('div', 'flex items-center gap-2.5');
   logoSection.appendChild(createNextelLogo(32));
-  const logoText = createElement('span', 'text-lg font-semibold tracking-tight', 'Nextel AI');
+  const logoText = createElement('span', 'text-lg font-semibold tracking-tight', 'CYTHEIA AI');
   logoSection.appendChild(logoText);
   
   const navLinks = createElement('div', 'flex items-center gap-8 text-sm text-gray-400');
@@ -179,7 +179,7 @@ export function renderLandingPage(container) {
     { icon: '💻', title: 'Write code', desc: 'Professional Monaco code editor with Arduino C++ syntax highlighting. Write setup() and loop() — your code drives the simulation.' },
     { icon: '▶️', title: 'Simulate', desc: 'Run your circuit and watch LEDs illuminate, motors rotate, displays update. The simulator executes your real Arduino code.' },
     { icon: '🐛', title: 'Debug', desc: 'Intelligent debugging detects floating inputs, missing grounds, short circuits, and code errors — with clear explanations.' },
-    { icon: '🧠', title: 'Learn with AI', desc: 'Ask Nextel AI to add components, generate code, explain circuits, or find wiring problems. Every change is previewable and undoable.' },
+    { icon: '🧠', title: 'Learn with AI', desc: 'Ask CYTHEIA AI to add components, generate code, explain circuits, or find wiring problems. Every change is previewable and undoable.' },
     { icon: '📜', title: 'Templates', desc: 'Start from real Arduino examples. LED blinker, traffic lights, button controls, sensors — learn by modifying working projects.' },
   ];
   
@@ -195,9 +195,9 @@ export function renderLandingPage(container) {
   
   // CTA Footer
   const footer = createElement('footer', 'relative z-10 px-8 py-8 text-center');
-  const footerBtn = createButton('Launch Nextel AI Studio', () => setView('dashboard'), 'px-8 py-4 bg-white text-black rounded-xl font-semibold hover:scale-105 text-lg');
+  const footerBtn = createButton('Launch CYTHEIA AI Studio', () => setView('dashboard'), 'px-8 py-4 bg-white text-black rounded-xl font-semibold hover:scale-105 text-lg');
   footer.appendChild(footerBtn);
-  const footerText = createElement('p', 'text-gray-500 text-sm mt-8', 'Nextel AI — Electronics design, simulation, and learning platform');
+  const footerText = createElement('p', 'text-gray-500 text-sm mt-8', 'CYTHEIA AI — Electronics design, simulation, and learning platform');
   footer.appendChild(footerText);
   main.appendChild(footer);
   

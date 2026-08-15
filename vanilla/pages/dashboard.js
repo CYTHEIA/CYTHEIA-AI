@@ -1,3 +1,4 @@
+import { TEMPLATES } from "../templates.js";
 import { setView, newProject, loadProject, addToast } from '../store.js';
 import { 
   fetchProjects, 
@@ -150,8 +151,7 @@ export async function renderDashboard(container) {
   async function showTemplates() {
     content.innerHTML = '<p class="text-gray-400">Loading templates...</p>';
     try {
-      await ensureTemplates();
-      const templates = await fetchTemplates();
+      const templates = TEMPLATES;
       content.innerHTML = '';
       
       if (templates.length === 0) {

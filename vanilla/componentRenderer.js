@@ -309,7 +309,7 @@ function LcdSVG({ component }) {
   return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("rect", { x: 0, y: 0, width: 220, height: 100, rx: 6, fill: "#1a6b3a", stroke: "#0d4a26", strokeWidth: 2 }), /* @__PURE__ */ h("rect", { x: 15, y: 15, width: 190, height: 70, rx: 2, fill: "#a5e8b5" }), /* @__PURE__ */ h("text", { x: 20, y: 40, fill: "#1a3a1a", style: { fontSize: "11px", fontFamily: "monospace", fontWeight: "bold" } }, line1.slice(0, 16)), /* @__PURE__ */ h("text", { x: 20, y: 65, fill: "#1a3a1a", style: { fontSize: "11px", fontFamily: "monospace", fontWeight: "bold" } }, line2.slice(0, 16)));
 }
 function OledSVG({ component }) {
-  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("rect", { x: 0, y: 0, width: 160, height: 120, rx: 4, fill: "#1a1a1a", stroke: "#333", strokeWidth: 2 }), /* @__PURE__ */ h("rect", { x: 15, y: 15, width: 130, height: 90, rx: 2, fill: "#0a0a0a" }), /* @__PURE__ */ h("text", { x: 80, y: 60, textAnchor: "middle", fill: "#30d158", style: { fontSize: "10px", fontFamily: "monospace" } }, component.props.text || "Nextel AI"));
+  return /* @__PURE__ */ h("g", null, /* @__PURE__ */ h("rect", { x: 0, y: 0, width: 160, height: 120, rx: 4, fill: "#1a1a1a", stroke: "#333", strokeWidth: 2 }), /* @__PURE__ */ h("rect", { x: 15, y: 15, width: 130, height: 90, rx: 2, fill: "#0a0a0a" }), /* @__PURE__ */ h("text", { x: 80, y: 60, textAnchor: "middle", fill: "#30d158", style: { fontSize: "10px", fontFamily: "monospace" } }, component.props.text || "CYTHEIA AI"));
 }
 function SevenSegmentSVG({ simState }) {
   const segments = simState?.visual?.segments || [false, false, false, false, false, false, false];
