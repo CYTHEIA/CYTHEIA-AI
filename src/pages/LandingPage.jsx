@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Cpu, Code2, Play, Bug, Brain, History, ArrowRight, Zap } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";

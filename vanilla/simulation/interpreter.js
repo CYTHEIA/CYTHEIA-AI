@@ -15,7 +15,6 @@ class ArduinoInterpreter {
   // Compiled functions
   setupFn = null;
   loopFn = null;
-  loopGenerator = null;
   // Running state
   running = false;
   paused = false;
@@ -60,24 +59,10 @@ class ArduinoInterpreter {
         errors.push(`Setup error: ${e.message}`);
       }
       try {
-        // Compile loop() as a generator so delay() can suspend execution
-        // instead of executing the entire loop in one synchronous call.
-        const generatorBody = loopBody
-          .replace(/\bdelayMicroseconds\s*\(/g, "yield __delayMicroseconds(")
-          .replace(/\bdelay\s*\(/g, "yield __delay(");
-
-        const generatorFactory = new Function(
+        this.loopFn = new Function(
           ...Object.keys(api),
-          "__delay",
-          "__delayMicroseconds",
-          `return function*() { ${generatorBody} };`
-        );
-
-        this.loopFn = generatorFactory(
-          ...Object.values(api),
-          (ms) => ms,
-          (us) => us / 1000
-        );
+          loopBody
+        ).bind(null, ...Object.values(api));
       } catch (e) {
         errors.push(`Loop error: ${e.message}`);
       }
@@ -254,7 +239,6 @@ class ArduinoInterpreter {
     this.startTime = Date.now();
     this.loopCount = 0;
     this.delayRemaining = 0;
-    this.loopGenerator = null;
     try {
       this.setupFn?.();
     } catch (e) {
@@ -264,28 +248,13 @@ class ArduinoInterpreter {
   }
   step(deltaMs) {
     if (!this.running || this.paused) return;
-
     if (this.delayRemaining > 0) {
       this.delayRemaining -= deltaMs * this.speed;
       if (this.delayRemaining > 0) return;
-      this.delayRemaining = 0;
     }
-
     try {
-      if (!this.loopGenerator) {
-        this.loopGenerator = this.loopFn?.();
-      }
-
-      if (!this.loopGenerator) return;
-
-      const result = this.loopGenerator.next();
-
-      if (result.done) {
-        this.loopGenerator = null;
-        this.loopCount++;
-      } else if (typeof result.value === "number") {
-        this.delayRemaining = result.value;
-      }
+      this.loopFn?.();
+      this.loopCount++;
     } catch (e) {
       this.onError(`Loop runtime error: ${e.message}`);
       this.running = false;
@@ -301,7 +270,6 @@ class ArduinoInterpreter {
     this.running = false;
     this.paused = false;
     this.delayRemaining = 0;
-    this.loopGenerator = null;
     this.pinModes.clear();
     this.pinValues.clear();
   }

@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useState } from "react";
 import { Plus, Search, Clock, Trash2, Copy, Download, Upload, Cpu, ArrowLeft, Folder } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";

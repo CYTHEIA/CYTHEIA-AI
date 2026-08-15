@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { Search, CornerDownLeft } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";

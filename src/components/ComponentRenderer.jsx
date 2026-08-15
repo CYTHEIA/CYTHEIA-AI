@@ -1,3 +1,4 @@
+import React from "react";
 import { COMPONENT_MAP } from "./library";
 function getPinWorldPosition(component, pinId) {
   const def = COMPONENT_MAP[component.type];
@@ -13,8 +14,16 @@ function getPinWorldPosition(component, pinId) {
   const ry = dx * Math.sin(rad) + dy * Math.cos(rad);
   return { x: component.x + rx, y: component.y + ry };
 }
-function ComponentRenderer({ component, simState, selected, hoveredPin, onPinClick, onComponentClick, showPinLabels }) {
-  const def = COMPONENT_MAP[component.type];
+function ComponentRenderer({
+  component,
+  simState,
+  selected,
+  hoveredPin,
+  onPinClick,
+  onComponentClick,
+  onComponentMouseDown,
+  showPinLabels
+}) {  const def = COMPONENT_MAP[component.type];
   if (!def) return null;
   const cx = def.width / 2;
   const cy = def.height / 2;
@@ -23,6 +32,7 @@ function ComponentRenderer({ component, simState, selected, hoveredPin, onPinCli
     {
       transform: `translate(${component.x - cx}, ${component.y - cy}) rotate(${component.rotation}, ${cx}, ${cy})`,
       onClick: onComponentClick,
+      onMouseDown: (e) => onComponentMouseDown?.(e, component.id),
       className: "cursor-pointer"
     },
     /* @__PURE__ */ React.createElement(

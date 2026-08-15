@@ -1,3 +1,4 @@
+import React from "react";
 import { useUIStore } from "@/store/uiStore";
 import { Check, AlertCircle, Info, AlertTriangle, X } from "lucide-react";
 function Toasts() {

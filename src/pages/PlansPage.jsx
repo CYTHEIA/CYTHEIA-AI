@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react";
 import { ArrowLeft, Check, Sparkles, Zap, Brain, Code2, Bug, Folder, HardDrive, X } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";

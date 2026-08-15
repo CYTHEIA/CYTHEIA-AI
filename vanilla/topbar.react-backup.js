@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Undo2,
   Redo2,

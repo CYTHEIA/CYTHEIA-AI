@@ -1,3 +1,4 @@
+import React from "react";
 import { useRef, useState, useCallback, useEffect } from "react";
 import { useProjectStore } from "@/store/projectStore";
 import { useUIStore } from "@/store/uiStore";
@@ -84,11 +85,24 @@ function CircuitCanvas() {
   const handleComponentClick = useCallback(
     (e, id) => {
       e.stopPropagation();
-      if (wireStart) return;
       selectComponent(id);
     },
-    [selectComponent, wireStart]
+    [selectComponent]
   );
+
+  const handleComponentMouseDown = useCallback(
+    (e, id) => {
+      if (wireStart) return;
+      e.stopPropagation();
+      const comp = components.find((c) => c.id === id);
+      if (!comp) return;
+      const world = screenToWorld(e.clientX, e.clientY);
+      setDragging({ id, offsetX: world.x - comp.x, offsetY: world.y - comp.y });
+      selectComponent(id);
+    },
+    [components, screenToWorld, selectComponent, wireStart]
+  );
+
   const handleMouseMove = useCallback(
     (e) => {
       const world = screenToWorld(e.clientX, e.clientY);
@@ -116,17 +130,37 @@ function CircuitCanvas() {
     setPanStart(null);
   }, [dragging, pushHistory]);
   const handleMouseDown = useCallback(
-    (e) => {
-      if (e.button === 1 || e.button === 0 && e.shiftKey || e.target === svgRef.current) {
-        if (e.button === 1 || e.button === 2) {
-          e.preventDefault();
-          setPanning(true);
-          setPanStart({ x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y });
-        }
+  (e) => {
+    if (e.button !== 0) return;
+
+    const componentGroup = e.target.closest?.("[data-component-id]");
+
+    if (componentGroup) {
+      const id = componentGroup.getAttribute("data-component-id");
+      const comp = components.find((c) => c.id === id);
+
+      if (comp && !wireStart) {
+        e.stopPropagation();
+
+        const world = screenToWorld(e.clientX, e.clientY);
+
+        setDragging({
+          id,
+          offsetX: world.x - comp.x,
+          offsetY: world.y - comp.y
+        });
+
+        selectComponent(id);
+        return;
       }
-    },
-    [pan]
-  );
+    }
+
+    if (e.target === svgRef.current) {
+      clearSelection();
+    }
+  },
+  [components, wireStart, screenToWorld, selectComponent, clearSelection]
+);
   const handleWheel = useCallback(
     (e) => {
       if (e.ctrlKey || e.metaKey) {
@@ -264,6 +298,7 @@ function CircuitCanvas() {
         hoveredPin,
         onPinClick: (pinId, e) => handlePinClick(comp.id, pinId, e),
         onComponentClick: (e) => handleComponentClick(e, comp.id),
+        onComponentMouseDown: handleComponentMouseDown,
         showPinLabels: true
       }
     )))

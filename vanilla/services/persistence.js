@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../lib/supabase.js";
 async function fetchProjects() {
   const { data, error } = await supabase.from("projects").select("*").eq("is_template", false).order("updated_at", { ascending: false });
   if (error) throw error;
@@ -62,28 +62,16 @@ async function createVersion(projectId, name, data) {
 }
 async function ensureTemplates() {
   const existing = await fetchTemplates();
-
-  if (existing.length > 0) {
-    return existing;
-  }
-
-  const { TEMPLATES } = await import("@/templates");
-
+  if (existing.length > 0) return;
+  const { TEMPLATES } = await import("../templates.js");
   for (const tpl of TEMPLATES) {
-    const { error } = await supabase.from("projects").insert({
+    await supabase.from("projects").insert({
       name: tpl.name,
       description: tpl.description,
       data: tpl.data,
       is_template: true
     });
-
-    if (error) {
-      console.error("Template insert failed:", tpl.name, error);
-      throw error;
-    }
   }
-
-  return fetchTemplates();
 }
 function mapDbProject(row) {
   return {

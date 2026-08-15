@@ -1,3 +1,4 @@
+import React from "react";
 import { useProjectStore } from "@/store/projectStore";
 import { useSimulationStore } from "@/store/simulationStore";
 import { COMPONENT_MAP } from "@/components/library";
